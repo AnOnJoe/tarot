@@ -1,0 +1,167 @@
+.slider {
+  --thumb: 34px;
+  --accent: var(--loss);
+
+  padding: 16px 16px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+
+.slider[data-success] {
+  --accent: var(--gold);
+}
+
+.slider__camps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.slider__camp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.slider__camp--right {
+  text-align: right;
+}
+
+.slider__campLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.slider__campPoints {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+/* Les défenseurs se chevauchent : la rangée reste compacte même à cinq. */
+.slider__stack {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.slider__stack .avatar + .avatar {
+  margin-right: -12px;
+}
+
+.slider__track {
+  position: relative;
+  height: var(--thumb);
+  border-radius: 999px;
+  background: var(--surface-2);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 22%);
+}
+
+.slider__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 34%, transparent);
+  pointer-events: none;
+  transition: background-color 160ms ease;
+}
+
+/* Le contrat à réaliser, matérialisé sur la piste. */
+.slider__notch {
+  position: absolute;
+  top: -7px;
+  bottom: -7px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--gold);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.slider__notchLabel {
+  position: absolute;
+  top: -17px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.slider__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: none;
+  appearance: none;
+  cursor: grab;
+}
+
+.slider__input::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 32%);
+}
+
+.slider__input::-moz-range-thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--surface);
+}
+
+.slider__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.slider__step {
+  flex: none;
+  width: 52px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-3);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.slider__step:active {
+  transform: scale(0.95);
+}
+
+.slider__verdict {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+
+.slider__verdict strong {
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.slider[data-success] .slider__verdict strong {
+  color: var(--gold);
+}

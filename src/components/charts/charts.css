@@ -1,0 +1,271 @@
+.chart {
+  margin: 0;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+
+.chart + .chart {
+  margin-top: 12px;
+}
+
+.chart__caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.chart__readout {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--gold);
+}
+
+.chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+
+/* Repères : présents, jamais concurrents des données. */
+.chart__zero {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart__crosshair {
+  stroke: var(--gold);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.chart__tick {
+  fill: var(--ink-faint);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart__line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Anneau de surface : deux points superposés restent distincts. */
+.chart__dot {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.chart__endLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.chart__tooltip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.chart__tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.chart__tooltipRow strong {
+  color: var(--ink);
+}
+
+.chart__swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex: none;
+}
+
+/* ------------------------------------------------------- barres horizontales */
+
+.bars,
+.diverging {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bars__row {
+  display: grid;
+  grid-template-columns: 62px 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.bars__label,
+.diverging__label {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bars__track {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.bars__fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+}
+
+.bars__value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.bars__note {
+  grid-column: 2 / -1;
+  margin-top: -6px;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* Axe zéro central : le signe se lit au côté de la barre. */
+.diverging__row {
+  display: grid;
+  grid-template-columns: 62px 1fr 62px;
+  align-items: center;
+  gap: 8px;
+}
+
+.diverging__axis {
+  position: relative;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--surface-2);
+}
+
+.diverging__axis::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--line);
+}
+
+.diverging__bar {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+}
+
+.diverging__bar[data-side="right"] {
+  left: 50%;
+  border-radius: 0 5px 5px 0;
+}
+
+.diverging__bar[data-side="left"] {
+  right: 50%;
+  border-radius: 5px 0 0 5px;
+}
+
+.diverging__value {
+  font-size: 14px;
+  font-weight: 640;
+  text-align: right;
+}
+
+.diverging__note {
+  grid-column: 2 / -1;
+  margin-top: -4px;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* --------------------------------------------------- part attaque / défense */
+
+.split {
+  display: flex;
+  gap: 2px; /* respiration entre segments : ils ne se touchent jamais */
+  height: 14px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.split__part {
+  background: var(--series-1);
+}
+
+.split__part--defense {
+  flex: 1;
+  background: var(--series-2);
+}
+
+.split__legend {
+  display: flex;
+  gap: 18px;
+  margin-top: 9px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.split__legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.split__legend strong {
+  color: var(--ink);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.tile__value {
+  font-size: 22px;
+  font-weight: 620;
+}
+
+.tile__label {
+  font-size: 10.5px;
+  text-align: center;
+  color: var(--ink-faint);
+}

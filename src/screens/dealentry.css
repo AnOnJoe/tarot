@@ -1,0 +1,169 @@
+/* Rangée de portraits pour désigner un joueur (preneur, roi appelé). */
+.pickRow {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.pickRow::-webkit-scrollbar {
+  display: none;
+}
+
+.pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: 1 0 auto;
+  min-width: 62px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+}
+
+.pick__name {
+  max-width: 66px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pick[aria-pressed="true"] .pick__name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.pick--solo {
+  justify-content: center;
+}
+
+.pick__solo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 1px dashed var(--line);
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.pick--solo[aria-pressed="true"] .pick__solo {
+  border-style: solid;
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--gold-ink);
+}
+
+/* Annonces rattachées à un joueur : une ligne par joueur. */
+.announce {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+
+.announce__row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 4px;
+}
+
+.announce__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.announce__choices {
+  display: flex;
+  gap: 5px;
+}
+
+.mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-3);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.mini__sub {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+
+.mini[aria-pressed="true"] {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--gold-ink);
+}
+
+.mini[aria-pressed="true"] .mini__sub {
+  color: color-mix(in srgb, var(--gold-ink) 68%, transparent);
+}
+
+.hint {
+  margin: 6px 4px 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+/* Décomposition du calcul, sous le curseur. */
+.detail {
+  padding: 4px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+
+.detail--scores {
+  margin-top: 10px;
+}
+
+.detail__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.detail__line:last-child {
+  border-bottom: 0;
+}
+
+.detail__line[data-strong] {
+  font-size: 16px;
+  font-weight: 620;
+  color: var(--ink);
+}

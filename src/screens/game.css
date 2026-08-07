@@ -1,0 +1,13 @@
+/*
+ * Le tableau déborde sur toute la largeur via une marge négative (cf. scoretable.css) :
+ * la gouttière du corps d'écran reste en place, elle sert de repère aux autres blocs.
+ */
+
+.game__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.game__actions .btn {
+  flex: 1;
+}

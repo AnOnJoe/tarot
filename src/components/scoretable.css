@@ -1,0 +1,157 @@
+.table {
+  margin: 0 calc(var(--pad) * -1);
+}
+
+/* En-tête collant : cumuls et boutons de prise restent atteignables en cours de partie. */
+.table__head {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  gap: 1px;
+  padding: 10px var(--pad) 12px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.table__player {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.table__dealer {
+  position: absolute;
+  top: 0;
+  line-height: 1;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* Laisse passer la mention « donne » et l'anneau doré au-dessus du portrait. */
+.table__player .avatar {
+  margin-top: 14px;
+}
+
+.table__name {
+  max-width: 100%;
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Assez gros pour se lire à bout de bras, assez sobre pour qu'un score à quatre
+   chiffres tienne encore dans une colonne de table à cinq. */
+.table__total {
+  font-size: 17px;
+  font-weight: 640;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.table__total[data-sign="up"] {
+  color: var(--gold);
+}
+
+.table__total[data-sign="down"] {
+  color: var(--loss-text);
+}
+
+.table__take {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-top: 2px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--gold);
+  cursor: pointer;
+}
+
+.table__take:active {
+  background: var(--gold);
+  color: var(--gold-ink);
+  transform: scale(0.92);
+}
+
+.table__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.table__row {
+  display: grid;
+  gap: 1px;
+  width: 100%;
+  padding: 0 var(--pad);
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: center;
+}
+
+.table__row:nth-child(odd) {
+  background: color-mix(in srgb, var(--surface) 42%, transparent);
+}
+
+.table__row:active {
+  background: var(--surface-3);
+}
+
+.table__gutter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 7px 0;
+}
+
+.table__index {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  line-height: 1.1;
+}
+
+.table__contract {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+
+.table__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 2px;
+  font-size: 15px;
+  font-weight: 550;
+  color: var(--ink-soft);
+}
+
+.table__cell[data-result="win"] {
+  background: var(--win);
+  color: var(--win-ink);
+}
+
+.table__cell[data-result="loss"] {
+  background: var(--loss);
+  color: var(--loss-ink);
+}

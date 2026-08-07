@@ -1,0 +1,52 @@
+.resume {
+  display: block;
+  width: 100%;
+  padding: 16px 14px 12px;
+  border: 1px solid var(--gold);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: left;
+  cursor: pointer;
+}
+
+.resume:active {
+  transform: scale(0.99);
+}
+
+.resume__players {
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+}
+
+.resume__player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.resume__score {
+  font-size: 19px;
+  font-weight: 620;
+}
+
+.resume__meta {
+  display: block;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--gold);
+}
+
+.list__title {
+  display: block;
+  font-size: 16px;
+}
+
+.list__grow .list__meta {
+  display: block;
+}

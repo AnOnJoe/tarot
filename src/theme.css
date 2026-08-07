@@ -1,0 +1,438 @@
+/*
+ * Deux ambiances issues du même monde : le feutre de la table le soir (sombre) et le
+ * carnet de score en papier (clair). Seuls les jetons de couleur changent d'un thème à
+ * l'autre — aucune règle de mise en page n'est dupliquée.
+ */
+
+:root {
+  --bg: #0e2b20;
+  --surface: #14382a;
+  --surface-2: #0a2119;
+  --surface-3: #1b4534;
+  --ink: #f2ede1;
+  --ink-soft: rgb(242 237 225 / 62%);
+  --ink-faint: rgb(242 237 225 / 34%);
+  --line: rgb(217 164 65 / 20%);
+  --gold: #d9a441;
+  --gold-ink: #10241c;
+  --win: #2f7d4f;
+  --win-ink: #eafff0;
+  --loss: #9e3b34;
+  --loss-ink: #ffeae7;
+  /* Rouge pour du texte sur le fond de page — le `--loss` sert de pavé, pas d'encre. */
+  --loss-text: #e2887f;
+  --shadow: 0 12px 32px rgb(0 0 0 / 35%);
+
+  --serif: ui-serif, "New York", Iowan Old Style, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+
+  --r-card: 16px;
+  --r-chip: 11px;
+  --pad: 16px;
+
+  /*
+   * Identité des joueurs et des séries de graphiques (cf. src/palette.ts).
+   * Ordre validé pour le daltonisme : ne pas permuter sans revalider.
+   */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+
+  --series-1-ink: #0b1f18;
+  --series-2-ink: #0b1f18;
+  --series-3-ink: #0b1f18;
+  --series-4-ink: #0b1f18;
+  --series-5-ink: #0b1f18;
+  --series-6-ink: #fff;
+  --series-7-ink: #0b1f18;
+  --series-8-ink: #0b1f18;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #efe8d8;
+    --surface: #f9f5ec;
+    --surface-2: #e5dbc4;
+    --surface-3: #fffdf7;
+    --ink: #143024;
+    --ink-soft: rgb(20 48 36 / 64%);
+    --ink-faint: rgb(20 48 36 / 36%);
+    --line: rgb(20 48 36 / 16%);
+    --gold: #96690f;
+    --gold-ink: #fffaf0;
+    --win: #cfe8d3;
+    --win-ink: #124d2c;
+    --loss: #f5d9d4;
+    --loss-ink: #872d26;
+    --loss-text: #a3352c;
+    --shadow: 0 10px 26px rgb(20 48 36 / 12%);
+
+    /* Mêmes huit teintes, redosées pour le papier clair — pas une autre palette. */
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+    --series-5: #e87ba4;
+    --series-6: #008300;
+    --series-7: #4a3aa7;
+    --series-8: #e34948;
+
+    --series-1-ink: #fff;
+    --series-2-ink: #0b1f18;
+    --series-3-ink: #0b1f18;
+    --series-4-ink: #0b1f18;
+    --series-5-ink: #0b1f18;
+    --series-6-ink: #fff;
+    --series-7-ink: #fff;
+    --series-8-ink: #0b1f18;
+
+    color-scheme: light;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Halo discret d'une lampe au-dessus de la table. Uniquement sur le thème sombre. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 70% at 50% -10%, rgb(255 255 255 / 6%), transparent 62%);
+}
+
+@media (prefers-color-scheme: light) {
+  body::before {
+    display: none;
+  }
+}
+
+/*
+ * L'application occupe exactement la hauteur visible : seul le corps d'écran défile, ce
+ * qui garde le titre et le bouton d'action ancrés, comme dans une application native.
+ * `dvh` suit la barre d'adresse de Safari quand l'app n'est pas encore installée.
+ */
+#root {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  touch-action: manipulation;
+}
+
+/* iOS zoome sur tout champ dont le texte descend sous 16px. */
+input,
+select {
+  font: inherit;
+  font-size: max(16px, 1rem);
+}
+
+/* ------------------------------------------------------------------ écrans */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.screen__body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 var(--pad) 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top) + 10px) var(--pad) 10px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar__title {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.topbar__action {
+  background: none;
+  border: 0;
+  padding: 6px 2px;
+  color: var(--gold);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.topbar__action--end {
+  text-align: right;
+}
+
+.topbar__action:disabled {
+  opacity: 0.35;
+}
+
+/* Barre d'action collée en bas, au-dessus de l'indicateur d'accueil iOS. */
+.footbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  padding: 12px var(--pad) calc(env(safe-area-inset-bottom) + 12px);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  border-top: 1px solid var(--line);
+}
+
+/* ---------------------------------------------------------------- éléments */
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 22px 0 8px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 17px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn--primary {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--gold-ink);
+  font-weight: 640;
+}
+
+.btn--ghost {
+  background: none;
+}
+
+.btn--danger {
+  color: var(--loss-ink);
+  background: var(--loss);
+  border-color: transparent;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.btn,
+.chip,
+.avatar {
+  transition:
+    transform 120ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Rangée de choix : contrats, bouts, camps. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chips--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+}
+
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 62px;
+  min-height: 54px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  background: var(--surface);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+}
+
+.chip__sub {
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--gold-ink);
+  font-weight: 640;
+}
+
+.chip[aria-pressed="true"] .chip__sub {
+  color: color-mix(in srgb, var(--gold-ink) 70%, transparent);
+}
+
+.chip:active {
+  transform: scale(0.97);
+}
+
+/* Listes de réglages et de parties. */
+.list {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+.list__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 15px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  text-align: left;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.list__row:last-child {
+  border-bottom: 0;
+}
+
+.list__row:active {
+  background: var(--surface-3);
+}
+
+.list__grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.list__meta {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.serif {
+  font-family: var(--serif);
+}
+
+.empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.empty__title {
+  font-family: var(--serif);
+  font-size: 20px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.field {
+  display: block;
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.field:focus-visible,
+.btn:focus-visible,
+.chip:focus-visible,
+.list__row:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
