@@ -19,8 +19,8 @@ export default defineConfig({
         scope: '/tarot/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#0d2f22',
-        theme_color: '#0d2f22',
+        background_color: '#0b0c0e',
+        theme_color: '#0b0c0e',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
