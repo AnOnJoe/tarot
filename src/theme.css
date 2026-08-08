@@ -410,6 +410,75 @@ input {
   color: var(--ink-faint);
 }
 
+/* ------------------------------------------------------- section repliable */
+
+.collapse {
+  margin-top: 26px;
+}
+
+.collapse__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 15px 16px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.collapse__head:active {
+  background: var(--surface-2);
+}
+
+.collapse__title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* Ce qui est déjà saisi reste visible même replié. */
+.collapse__summary {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  font-size: 13px;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.collapse__chevron {
+  flex: none;
+  margin-left: auto;
+  font-size: 19px;
+  line-height: 1;
+  color: var(--ink-faint);
+  transition: transform 200ms cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.collapse__summary + .collapse__chevron {
+  margin-left: 0;
+}
+
+.collapse__head[aria-expanded="true"] .collapse__chevron {
+  transform: rotate(90deg);
+}
+
+.collapse__body {
+  padding-top: 4px;
+  animation: collapseIn 220ms cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+@keyframes collapseIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
 .field {
   display: block;
   width: 100%;

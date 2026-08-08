@@ -12,7 +12,7 @@ import type {
 } from '../engine/types'
 import { Avatar } from '../components/Avatar'
 import { PointSlider } from '../components/PointSlider'
-import { Button, Chip, Eyebrow, Screen, TopAction } from '../components/ui'
+import { Button, Chip, Collapsible, Eyebrow, Screen, TopAction } from '../components/ui'
 import type { Player } from '../store/db'
 import './dealentry.css'
 
@@ -104,6 +104,24 @@ export function DealEntry({
       })
     }
   }
+
+  /**
+   * Ce que contient la section repliée, en une ligne. `null` quand aucune annonce n'a été
+   * faite — le repli ne cache alors rien qu'il faille signaler.
+   */
+  const announceSummary = (() => {
+    const parts: string[] = []
+    for (const handful of deal.handfuls) {
+      parts.push(`Poignée ${HANDFUL_LABELS[handful.kind].toLowerCase()}`)
+    }
+    if (deal.slam !== 'aucun') parts.push('Chelem')
+    if (deal.miseries.length > 0) {
+      parts.push(
+        deal.miseries.length > 1 ? `${deal.miseries.length} misères` : 'Misère',
+      )
+    }
+    return parts.length > 0 ? parts.join(' · ') : null
+  })()
 
   const toggleMisery = (playerId: PlayerId) => {
     const has = deal.miseries.some((m) => m.playerId === playerId)
@@ -249,6 +267,13 @@ export function DealEntry({
         />
       </div>
 
+      <Collapsible
+        title="Autres annonces"
+        summary={announceSummary}
+        // Rouvre d'office quand la donne en contient déjà : sur une correction, il ne faut
+        // pas avoir à deviner où se cache la poignée qu'on vient chercher.
+        defaultOpen={announceSummary !== null}
+      >
       <Eyebrow>Poignées</Eyebrow>
       <div className="announce">
         {players.map((player) => {
@@ -311,6 +336,7 @@ export function DealEntry({
           </div>
         </>
       )}
+      </Collapsible>
 
       <Eyebrow>Points réalisés</Eyebrow>
       <PointSlider

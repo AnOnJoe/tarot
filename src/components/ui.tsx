@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 /** Coquille d'un écran : barre de titre collante, corps défilant, barre d'action en bas. */
 export function Screen({
@@ -93,6 +93,44 @@ export function Button({
     <button type={type} className={`btn${suffix}`} onClick={onClick} disabled={disabled}>
       {children}
     </button>
+  )
+}
+
+/**
+ * Section repliable.
+ *
+ * Quand elle est fermée, `summary` rappelle ce qu'elle contient : replier ne doit pas
+ * faire disparaître une annonce déjà saisie du champ de vision.
+ */
+export function Collapsible({
+  title,
+  summary,
+  defaultOpen = false,
+  children,
+}: {
+  title: string
+  summary?: ReactNode
+  defaultOpen?: boolean
+  children: ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+
+  return (
+    <div className="collapse">
+      <button
+        type="button"
+        className="collapse__head"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="collapse__title">{title}</span>
+        {!open && summary && <span className="collapse__summary">{summary}</span>}
+        <span className="collapse__chevron" aria-hidden="true">
+          ›
+        </span>
+      </button>
+      {open && <div className="collapse__body">{children}</div>}
+    </div>
   )
 }
 
