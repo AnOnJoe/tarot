@@ -1,6 +1,17 @@
 import './logo.css'
 
 /**
+ * Ce que fait l'application, en clair.
+ *
+ * « Vachette » et « Chacun pour soi » disent d'où vient le nom, pas à quoi sert l'outil :
+ * sur un écran d'accueil, rien n'indiquerait qu'on compte des points de tarot. Cette
+ * ligne est la seule qui l'annonce, elle est donc littérale plutôt que jolie.
+ *
+ * Définie ici et nulle part ailleurs — la même chaîne sert au lancement et à l'accueil.
+ */
+export const TAGLINE = 'Compteur de points de tarot'
+
+/**
  * La marque : deux cartes croisées dessinant un V.
  *
  * Elle emploie le rouge saturé `--brand`, réservé au logo. L'accent de l'interface est un

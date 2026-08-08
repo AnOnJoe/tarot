@@ -1,4 +1,4 @@
-import { Logo } from './Logo'
+import { Logo, TAGLINE } from './Logo'
 import './splash.css'
 
 /**
@@ -13,7 +13,10 @@ export function Splash({ leaving }: { leaving: boolean }) {
   return (
     <div className="splash" data-leaving={leaving || undefined} aria-hidden="true">
       <Logo stacked />
-      <p className="splash__tagline">Chacun pour soi</p>
+      <p className="splash__tagline">{TAGLINE}</p>
+      {/* La devise garde sa place ici, où il y a de l'air : elle donne le ton sans se
+          substituer à ce que l'application annonce d'elle-même. */}
+      <p className="splash__motto">Chacun pour soi</p>
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { formatPoints } from '../engine/rules'
 import { cumulative } from '../engine/score'
 import { Avatar } from '../components/Avatar'
-import { Logo } from '../components/Logo'
+import { Logo, TAGLINE } from '../components/Logo'
 import { Button, EmptyState, Screen } from '../components/ui'
 import {
   type Game,
@@ -94,7 +94,7 @@ export function Home({
           qu'on voit en ouvrant, et le seul écran qui n'a rien à annoncer d'autre. */}
       <header className="home__brand">
         <Logo />
-        <p className="home__tagline">Chacun pour soi</p>
+        <p className="home__tagline">{TAGLINE}</p>
       </header>
 
       {current && (
