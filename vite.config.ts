@@ -9,6 +9,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // L'enregistrement est fait à la main dans src/pwa.ts, qui ajoute les contrôles de
+      // mise à jour dont iOS a besoin. Sans ceci, le script injecté ferait doublon.
+      injectRegister: null,
       includeAssets: ['icons/apple-touch-icon.png', 'icons/favicon.svg'],
       manifest: {
         name: 'Tarot — compteur de points',
