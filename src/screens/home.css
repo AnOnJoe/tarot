@@ -1,3 +1,15 @@
+/* Signature en tête d'accueil. La barre de titre reste vide au-dessus : deux titres
+   l'un sur l'autre se concurrenceraient. */
+.home__brand {
+  padding: 2px 0 4px;
+}
+
+.home__tagline {
+  margin-top: 5px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
 .resume {
   display: block;
   width: 100%;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { PlayerId } from './engine/types'
+import { Splash } from './components/Splash'
 import { Achievements } from './screens/Achievements'
 import { Backup } from './screens/Backup'
 import { Game } from './screens/Game'
@@ -26,6 +27,9 @@ type View =
   | { name: 'hautsFaits' }
   | { name: 'sauvegarde' }
 
+/** Durée minimale d'affichage de la marque au lancement, en millisecondes. */
+const SPLASH_FLOOR = 620
+
 export function App() {
   const [rules, setRules] = useRules()
   const [view, setView] = useState<View>({ name: 'accueil' })
@@ -33,6 +37,7 @@ export function App() {
   const [ready, setReady] = useState(false)
   /** Une sauvegarde vient d'être restaurée : l'état en mémoire est périmé. */
   const [justRestored, setJustRestored] = useState(false)
+  const [splash, setSplash] = useState<'visible' | 'leaving' | 'gone'>('visible')
 
   // Reprise de la partie ouverte : rouvrir l'app doit ramener là où on en était.
   useEffect(() => {
@@ -42,78 +47,100 @@ export function App() {
     })
   }, [])
 
-  if (!rules || !ready) return null
+  // L'écran de lancement couvre le chargement réel ; le plancher le rend perceptible
+  // quand la base répond en quelques millisecondes.
+  useEffect(() => {
+    if (!rules || !ready) return
+    const leave = setTimeout(() => setSplash('leaving'), SPLASH_FLOOR)
+    const done = setTimeout(() => setSplash('gone'), SPLASH_FLOOR + 300)
+    return () => {
+      clearTimeout(leave)
+      clearTimeout(done)
+    }
+  }, [rules, ready])
 
-  switch (view.name) {
-    case 'nouvelle':
-      return (
-        <NewGame
-          onCancel={() => setView({ name: 'accueil' })}
-          onStart={async (playerIds: PlayerId[], firstDealerIndex: number) => {
-            const game = await createGame(playerIds, firstDealerIndex)
-            setView({ name: 'partie', game })
-          }}
-        />
-      )
+  if (!rules || !ready) return <Splash leaving={false} />
 
-    case 'partie':
-      return (
-        <Game
-          game={view.game}
-          rules={rules}
-          onExit={() => setView({ name: 'accueil' })}
-          onOpenStats={() => setView({ name: 'stats', game: view.game, back: 'partie' })}
-          onEnd={async () => {
-            await endGame(view.game.id)
-            setView({ name: 'stats', game: view.game, back: 'accueil', celebrate: true })
-          }}
-        />
-      )
+  return (
+    <>
+      {renderScreen()}
+      {splash !== 'gone' && <Splash leaving={splash === 'leaving'} />}
+    </>
+  )
 
-    case 'stats':
-      return (
-        <Stats
-          game={view.game}
-          celebrate={view.celebrate}
-          onClose={() =>
-            setView(
-              view.back === 'partie' && view.game
-                ? { name: 'partie', game: view.game }
-                : { name: 'accueil' },
-            )
-          }
-        />
-      )
+  function renderScreen() {
+    if (!rules) return null
+    switch (view.name) {
+      case 'nouvelle':
+        return (
+          <NewGame
+            onCancel={() => setView({ name: 'accueil' })}
+            onStart={async (playerIds: PlayerId[], firstDealerIndex: number) => {
+              const game = await createGame(playerIds, firstDealerIndex)
+              setView({ name: 'partie', game })
+            }}
+          />
+        )
 
-    case 'regles':
-      return <Rules rules={rules} onChange={setRules} onClose={() => setView({ name: 'accueil' })} />
+      case 'partie':
+        return (
+          <Game
+            game={view.game}
+            rules={rules}
+            onExit={() => setView({ name: 'accueil' })}
+            onOpenStats={() => setView({ name: 'stats', game: view.game, back: 'partie' })}
+            onEnd={async () => {
+              await endGame(view.game.id)
+              setView({ name: 'stats', game: view.game, back: 'accueil', celebrate: true })
+            }}
+          />
+        )
 
-    case 'hautsFaits':
-      return <Achievements onClose={() => setView({ name: 'accueil' })} />
+      case 'stats':
+        return (
+          <Stats
+            game={view.game}
+            celebrate={view.celebrate}
+            onClose={() =>
+              setView(
+                view.back === 'partie' && view.game
+                  ? { name: 'partie', game: view.game }
+                  : { name: 'accueil' },
+              )
+            }
+          />
+        )
 
-    case 'sauvegarde':
-      return (
-        <Backup
-          onRestored={() => setJustRestored(true)}
-          onClose={() => {
-            // Après une restauration, barèmes, carnet et parties ont tous changé sous
-            // l'application : un rechargement complet évite d'en oublier un.
-            if (justRestored) window.location.reload()
-            else setView({ name: 'accueil' })
-          }}
-        />
-      )
+      case 'regles':
+        return <Rules rules={rules} onChange={setRules} onClose={() => setView({ name: 'accueil' })} />
 
-    default:
-      return (
-        <Home
-          onResume={(game) => setView({ name: 'partie', game })}
-          onNewGame={() => setView({ name: 'nouvelle' })}
-          onOpenStats={() => setView({ name: 'stats', back: 'accueil' })}
-          onOpenAchievements={() => setView({ name: 'hautsFaits' })}
-          onOpenRules={() => setView({ name: 'regles' })}
-          onOpenBackup={() => setView({ name: 'sauvegarde' })}
-        />
-      )
+      case 'hautsFaits':
+        return <Achievements onClose={() => setView({ name: 'accueil' })} />
+
+      case 'sauvegarde':
+        return (
+          <Backup
+            onRestored={() => setJustRestored(true)}
+            onClose={() => {
+              // Après une restauration, barèmes, carnet et parties ont tous changé sous
+              // l'application : un rechargement complet évite d'en oublier un.
+              if (justRestored) window.location.reload()
+              else setView({ name: 'accueil' })
+            }}
+          />
+        )
+
+      default:
+        return (
+          <Home
+            onResume={(game) => setView({ name: 'partie', game })}
+            onNewGame={() => setView({ name: 'nouvelle' })}
+            onOpenStats={() => setView({ name: 'stats', back: 'accueil' })}
+            onOpenAchievements={() => setView({ name: 'hautsFaits' })}
+            onOpenRules={() => setView({ name: 'regles' })}
+            onOpenBackup={() => setView({ name: 'sauvegarde' })}
+          />
+        )
+    }
   }
 }

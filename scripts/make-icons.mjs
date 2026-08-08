@@ -1,9 +1,9 @@
 /**
- * Génère les icônes PNG de l'application.
+ * Génère les icônes de l'application : la marque Vachette, deux cartes croisées en V.
  *
- * Écrit en Node pur (zlib + CRC32) plutôt qu'avec une bibliothèque d'images : l'icône est
- * une composition géométrique simple, et le projet n'a ainsi aucune dépendance de build
- * supplémentaire à installer sur une machine neuve.
+ * Écrit en Node pur (zlib + CRC32) plutôt qu'avec une bibliothèque d'images : la marque
+ * est une composition géométrique simple, et le projet n'a ainsi aucune dépendance de
+ * build supplémentaire à installer sur une machine neuve.
  *
  *   node scripts/make-icons.mjs
  */
@@ -16,45 +16,28 @@ import { fileURLToPath } from 'node:url'
 const OUT =
   process.env.ICON_OUT ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons')
 
-/** Emblème de la carte visible : `enseignes`, `pique` ou `etoile`. */
-const EMBLEM = process.env.ICON_EMBLEM ?? 'enseignes'
+/** Fond de l'application, ivoire du carton, rouge saturé de la marque. */
+const FOND = [11, 12, 14]
+const IVOIRE = [247, 243, 230]
+const ROUGE = [232, 86, 74]
 
 /**
- * Géométrie de l'icône, en fractions du côté. Source unique : le PNG comme le favicon SVG
- * s'en déduisent, ce qui les empêche de diverger comme ils l'ont fait une première fois.
- * Les demi-dimensions sont communes aux deux cartes.
+ * Géométrie de la marque, en fractions du côté. Source unique : le PNG comme le favicon
+ * SVG s'en déduisent, ce qui les empêche de diverger comme ils l'ont fait une fois.
  */
-const CARD = {
-  w: 0.145,
-  h: 0.235,
-  radius: 0.045,
-  gap: 0.013,
-  frameInset: 0.022,
-  frameWidth: 0.011,
-}
+const CARD = { w: 0.145, h: 0.245, radius: 0.05, gap: 0.015 }
+
+/**
+ * Les deux cartes croisées qui dessinent le V. Angles symétriques : c'est la symétrie qui
+ * fait lire la lettre, les cartes prises séparément ne disent rien.
+ */
+const CARDS = [
+  { cx: 0.42, cy: 0.5, angle: -0.33, fill: ROUGE },
+  { cx: 0.58, cy: 0.5, angle: 0.33, fill: IVOIRE },
+]
 
 const hex = ([r, g, b]) =>
   `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`
-
-/*
- * Le fond reprend celui de l'application ; les cartes empruntent leurs couleurs au jeu
- * lui-même — l'ivoire du carton, le rouge des enseignes — et l'indigo reste dans la
- * famille de l'accent de l'interface.
- */
-const FOND = [11, 12, 14]
-const IVOIRE = [247, 243, 230]
-const INDIGO = [74, 63, 214]
-const ROUGE = [200, 50, 43]
-const NOIR = [26, 26, 32]
-const LISERE = [150, 140, 240]
-
-/** Les deux cartes de l'éventail, avec leurs couleurs. */
-const CARDS = [
-  // Le dos de la carte cachée.
-  { cx: 0.395, cy: 0.5, angle: -0.4, fill: INDIGO, frame: LISERE },
-  // La carte retournée, face visible.
-  { cx: 0.58, cy: 0.505, angle: 0.19, fill: IVOIRE, frame: ROUGE, emblem: true },
-]
 
 /** Table CRC32, pour les sommes de contrôle exigées par le format PNG. */
 const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
@@ -119,101 +102,7 @@ function inRoundRect(lx, ly, halfW, halfH, radius) {
 }
 
 /**
- * Sommets d'une étoile à cinq branches, pointe en haut.
- *
- * Le rapport creux/pointe de 0,382 est celui du pentagramme régulier : c'est lui qui donne
- * à l'étoile ses branches franches plutôt que des pétales.
- */
-function starPolygon(outer) {
-  const inner = outer * 0.382
-  const points = []
-  for (let i = 0; i < 10; i++) {
-    const radius = i % 2 === 0 ? outer : inner
-    const angle = -Math.PI / 2 + (i * Math.PI) / 5
-    points.push([Math.cos(angle) * radius, Math.sin(angle) * radius])
-  }
-  return points
-}
-
-/** Appartenance à un polygone, règle pair-impair. Arêtes droites, contrairement à une
- *  frontière calculée en polaire. */
-function inPolygon(lx, ly, points) {
-  let inside = false
-  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-    const [xi, yi] = points[i]
-    const [xj, yj] = points[j]
-    if (yi > ly !== yj > ly && lx < ((xj - xi) * (ly - yi)) / (yj - yi) + xi) {
-      inside = !inside
-    }
-  }
-  return inside
-}
-
-const inDisc = (lx, ly, cx, cy, r) => (lx - cx) ** 2 + (ly - cy) ** 2 <= r * r
-
-/**
- * Les quatre enseignes françaises, dessinées analytiquement.
- *
- * Chacune se ramène à des disques et des polygones : le pique est un cœur retourné, le
- * trèfle trois disques, le carreau un losange. `s` est le demi-côté de l'enseigne.
- */
-function inPique(lx, ly, s) {
-  if (inPolygon(lx, ly, [[0, -s], [-0.92 * s, 0.18 * s], [0.92 * s, 0.18 * s]])) return true
-  if (inDisc(lx, ly, -0.46 * s, 0.16 * s, 0.46 * s)) return true
-  if (inDisc(lx, ly, 0.46 * s, 0.16 * s, 0.46 * s)) return true
-  // Le pied, évasé vers le bas.
-  return inPolygon(lx, ly, [
-    [-0.1 * s, 0.2 * s],
-    [0.1 * s, 0.2 * s],
-    [0.34 * s, 0.86 * s],
-    [-0.34 * s, 0.86 * s],
-  ])
-}
-
-function inCoeur(lx, ly, s) {
-  if (inPolygon(lx, ly, [[0, s], [-0.92 * s, -0.18 * s], [0.92 * s, -0.18 * s]])) return true
-  return (
-    inDisc(lx, ly, -0.46 * s, -0.16 * s, 0.46 * s) ||
-    inDisc(lx, ly, 0.46 * s, -0.16 * s, 0.46 * s)
-  )
-}
-
-function inCarreau(lx, ly, s) {
-  return Math.abs(lx) / (0.72 * s) + Math.abs(ly) / s <= 1
-}
-
-function inTrefle(lx, ly, s) {
-  if (inDisc(lx, ly, 0, -0.42 * s, 0.42 * s)) return true
-  if (inDisc(lx, ly, -0.44 * s, 0.22 * s, 0.42 * s)) return true
-  if (inDisc(lx, ly, 0.44 * s, 0.22 * s, 0.42 * s)) return true
-  return inPolygon(lx, ly, [
-    [-0.1 * s, 0.2 * s],
-    [0.1 * s, 0.2 * s],
-    [0.32 * s, 0.9 * s],
-    [-0.32 * s, 0.9 * s],
-  ])
-}
-
-/**
- * Les quatre enseignes disposées en carré. Chacune rend sa propre couleur : dans un jeu
- * français, pique et trèfle sont noirs, cœur et carreau rouges.
- */
-function enseigneAt(lx, ly, s) {
-  const d = s * 0.62
-  const p = s * 0.42
-  if (inPique(lx + d, ly + d, p)) return NOIR
-  if (inCoeur(lx - d, ly + d, p)) return ROUGE
-  if (inCarreau(lx + d, ly - d, p)) return ROUGE
-  if (inTrefle(lx - d, ly - d, p)) return NOIR
-  return null
-}
-
-/**
- * Dessine l'icône : deux cartes de tarot en éventail sur le fond de l'application.
- *
- * Celle de derrière montre son dos, indigo à filet ; celle de devant est retournée et
- * porte l'étoile de l'Excuse en rouge, dans son cadre. Un seul emblème, franc : à 60 px
- * sur l'écran d'accueil, tout motif plus fin se referme en bouillie.
+ * Dessine la marque sur le fond de l'application.
  *
  * `inset` réserve la zone de sécurité des icônes masquables, dont le système peut rogner
  * les bords pour les inscrire dans la forme de son choix.
@@ -223,15 +112,10 @@ function draw(size, inset) {
   const pixels = Buffer.alloc(size * size * 3)
   const scale = size * inset
 
-  // Calculée une fois : le même emblème sert à tous les pixels.
-  const half = CARD.w * scale
-  const star = starPolygon(half * 0.66)
-  // Rend la couleur de l'emblème sous le point, ou `null` s'il n'y en a pas.
-  const emblemAt = {
-    etoile: (lx, ly) => (inPolygon(lx, ly, star) ? ROUGE : null),
-    enseignes: (lx, ly) => enseigneAt(lx, ly, half * 0.74),
-    pique: (lx, ly) => (inPique(lx, ly, half * 0.6) ? NOIR : null),
-  }[EMBLEM]
+  const halfW = CARD.w * scale
+  const halfH = CARD.h * scale
+  const radius = CARD.radius * scale
+  const gap = CARD.gap * scale
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -246,31 +130,10 @@ function draw(size, inset) {
 
           for (const card of CARDS) {
             const [lx, ly] = toLocal(px, py, card.cx * size, card.cy * size, card.angle)
-            const halfW = CARD.w * scale
-            const halfH = CARD.h * scale
-            const radius = CARD.radius * scale
-
             // Carte légèrement élargie, peinte au fond : elle creuse l'écart entre les
             // deux cartes sans dépendre d'un trait d'un pixel.
-            const gap = CARD.gap * scale
             if (inRoundRect(lx, ly, halfW + gap, halfH + gap, radius)) color = FOND
-            if (!inRoundRect(lx, ly, halfW, halfH, radius)) continue
-            color = card.fill
-
-            // Filet intérieur : la bordure imprimée du carton.
-            const inset1 = CARD.frameInset * scale
-            const inset2 = inset1 + CARD.frameWidth * scale
-            if (
-              inRoundRect(lx, ly, halfW - inset1, halfH - inset1, radius * 0.7) &&
-              !inRoundRect(lx, ly, halfW - inset2, halfH - inset2, radius * 0.6)
-            ) {
-              color = card.frame
-            }
-
-            if (card.emblem) {
-              const ink = emblemAt(lx, ly)
-              if (ink) color = ink
-            }
+            if (inRoundRect(lx, ly, halfW, halfH, radius)) color = card.fill
           }
 
           r += color[0]
@@ -293,7 +156,7 @@ mkdirSync(OUT, { recursive: true })
 const targets = [
   ['icon-192.png', 192, 1],
   ['icon-512.png', 512, 1],
-  // Masquable : le motif tient dans les 80 % centraux, le système peut rogner le reste.
+  // Masquable : le motif tient dans les 78 % centraux, le système peut rogner le reste.
   ['icon-maskable-512.png', 512, 0.78],
   ['apple-touch-icon.png', 180, 1],
 ]
@@ -303,27 +166,16 @@ for (const [name, size, inset] of targets) {
   console.log(`${name} — ${size}×${size}`)
 }
 
-/*
- * Favicon des onglets de bureau, déduit de la même géométrie que le PNG. Il s'affiche à
- * 16 px : les quatre enseignes y seraient illisibles, on s'en tient aux deux cartes et à
- * leur cadre imprimé, qui tiennent encore à cette taille.
- */
+/** Favicon des onglets de bureau, déduit de la même géométrie que le PNG. */
 const S = 100
 const card = (c) => {
   const [w, h] = [CARD.w * S, CARD.h * S]
   const [cx, cy] = [c.cx * S, c.cy * S]
-  const deg = (c.angle * 180) / Math.PI
-  const rot = `rotate(${deg.toFixed(2)} ${cx} ${cy})`
-  const inset = (CARD.frameInset + CARD.frameWidth / 2) * S
-  return `  <g transform="${rot}">
-    <rect x="${(cx - w).toFixed(2)}" y="${(cy - h).toFixed(2)}" width="${(w * 2).toFixed(2)}" height="${(h * 2).toFixed(2)}"
-          rx="${(CARD.radius * S).toFixed(2)}" fill="${hex(c.fill)}"
-          stroke="${hex(FOND)}" stroke-width="${(CARD.gap * 2 * S).toFixed(2)}"/>
-    <rect x="${(cx - w + inset).toFixed(2)}" y="${(cy - h + inset).toFixed(2)}"
-          width="${(w * 2 - inset * 2).toFixed(2)}" height="${(h * 2 - inset * 2).toFixed(2)}"
-          rx="${(CARD.radius * 0.7 * S).toFixed(2)}" fill="none"
-          stroke="${hex(c.frame)}" stroke-width="${(CARD.frameWidth * S).toFixed(2)}"/>
-  </g>`
+  const deg = ((c.angle * 180) / Math.PI).toFixed(2)
+  return `  <rect x="${(cx - w).toFixed(2)}" y="${(cy - h).toFixed(2)}" width="${(w * 2).toFixed(2)}" height="${(h * 2).toFixed(2)}"
+        rx="${(CARD.radius * S).toFixed(2)}" fill="${hex(c.fill)}"
+        stroke="${hex(FOND)}" stroke-width="${(CARD.gap * 2 * S).toFixed(2)}"
+        transform="rotate(${deg} ${cx} ${cy})"/>`
 }
 
 const favicon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}">

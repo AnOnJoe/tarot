@@ -1,0 +1,31 @@
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.logo--stacked {
+  flex-direction: column;
+  gap: 18px;
+}
+
+.logoMark {
+  flex: none;
+  display: block;
+}
+
+/*
+ * Le mot est traité comme un logotype : graisse maximale et approche très resserrée. Sans
+ * fonte à charger — l'application doit rester utilisable hors ligne dès la première
+ * seconde — c'est le dessin de la lettre système poussé à ses extrêmes qui fait la marque.
+ */
+.logo__word {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.logo--stacked .logo__word {
+  font-size: 40px;
+}

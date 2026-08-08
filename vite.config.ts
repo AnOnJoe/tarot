@@ -14,8 +14,8 @@ export default defineConfig({
       injectRegister: null,
       includeAssets: ['icons/apple-touch-icon.png', 'icons/favicon.svg'],
       manifest: {
-        name: 'Tarot — compteur de points',
-        short_name: 'Tarot',
+        name: 'Vachette — compteur de tarot',
+        short_name: 'Vachette',
         description: 'Compteur de points pour le tarot à 3, 4 et 5 joueurs.',
         lang: 'fr',
         start_url: '/tarot/',

@@ -1,7 +1,13 @@
-# Tarot — compteur de points
+# Vachette
 
-Application de comptage des points du tarot, pour la table familiale. Remplace Tarомètre,
-devenu inutilisable à cause de la publicité.
+> Chacun pour soi.
+
+Compteur de points du tarot, pour la table familiale. Remplace Tarомètre, devenu
+inutilisable à cause de la publicité.
+
+Le nom vient de la convention maison de la table : quand personne ne prend, on joue la
+**vachette** plutôt que de redistribuer. La marque en reprend le geste — deux cartes
+croisées qui dessinent un V.
 
 C'est une **PWA** : elle s'installe sur l'écran d'accueil d'un iPhone depuis Safari, tourne
 entièrement hors ligne, ne collecte rien, n'affiche aucune publicité, et se met à jour chez
@@ -66,11 +72,16 @@ réellement qu'une fois déployé.
 
 | | |
 |---|---|
-| `src/engine/` | Calcul des points et hauts faits. TypeScript pur, sans React ni DOM, couvert par 62 tests |
+| `src/engine/` | Calcul des points et hauts faits. TypeScript pur, sans React ni DOM, couvert par 71 tests |
 | `src/store/` | Persistance IndexedDB (joueurs, parties, donnes, barèmes) et export |
-| `src/screens/` | Les six écrans de l'application |
+| `src/screens/` | Les huit écrans de l'application |
 | `src/components/` | Portraits, tableau de scores, curseur de points, graphiques SVG |
 | `src/palette.ts` | Identité colorée des joueurs, validée pour le daltonisme |
+
+L'accent de l'interface (corail sur sombre, grenat sur clair) est choisi pour rester à
+distance mesurée de chaque couleur de joueur : une teinte d'interface ne doit jamais se
+lire comme l'identité de quelqu'un à table. Le rouge saturé de la marque, lui, ne sert
+qu'au logo.
 
 Le moteur est isolé à dessein : c'est la seule partie qui doit être irréprochable, et il
 resterait portable tel quel si une version native voyait le jour. Un test vérifie sur

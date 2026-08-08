@@ -5,8 +5,9 @@
  * surface empilés, à l'espace et à la graisse typographique. Les chiffres sont le sujet,
  * l'interface se tait autour.
  *
- * L'accent lavande est délibérément distinct du violet de la palette des joueurs
- * (ΔE 16,4) : une couleur d'interface ne doit jamais se lire comme une identité de joueur.
+ * L'accent corail est délibérément distinct du rouge de la palette des joueurs (ΔE 16,1) :
+ * une couleur d'interface ne doit jamais se lire comme une identité de joueur. Le rouge
+ * saturé de la marque, lui, reste cantonné au logo.
  */
 
 :root {
@@ -19,8 +20,12 @@
   --ink-faint: #6b727c;
   --line: rgb(255 255 255 / 7%);
 
-  --accent: #c4bcff;
+  /* Corail clair : nettement séparé du joueur rouge (ΔE 16,1) et du joueur orange, pour
+     qu'une couleur d'interface ne se lise jamais comme l'identité d'un joueur. */
+  --accent: #ffab9d;
   --accent-ink: #0b0c0e;
+  /* Rouge saturé de la marque : réservé au logo, jamais à du chrome ni à une série. */
+  --brand: #e8564a;
   --pos: #4ade80;
   --neg: #ff6b6b;
 
@@ -65,8 +70,9 @@
     --ink-faint: #9a9da2;
     --line: rgb(0 0 0 / 8%);
 
-    --accent: #5b4bff;
+    --accent: #a81f19;
     --accent-ink: #fff;
+    --brand: #c8322b;
     --pos: #1f8a4d;
     --neg: #d13b2e;
 

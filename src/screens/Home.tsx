@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { formatPoints } from '../engine/rules'
 import { cumulative } from '../engine/score'
 import { Avatar } from '../components/Avatar'
+import { Logo } from '../components/Logo'
 import { Button, EmptyState, Screen } from '../components/ui'
 import {
   type Game,
@@ -81,7 +82,21 @@ export function Home({
   const past = summaries.filter((s) => s.game.endedAt !== null)
 
   return (
-    <Screen title="Tarot" footer={<Button variant="primary" onClick={onNewGame}>Nouvelle partie</Button>}>
+    <Screen
+      title=""
+      footer={
+        <Button variant="primary" onClick={onNewGame}>
+          Nouvelle partie
+        </Button>
+      }
+    >
+      {/* L'accueil porte la signature à la place d'un titre : c'est la première chose
+          qu'on voit en ouvrant, et le seul écran qui n'a rien à annoncer d'autre. */}
+      <header className="home__brand">
+        <Logo />
+        <p className="home__tagline">Chacun pour soi</p>
+      </header>
+
       {current && (
         <>
           <p className="eyebrow">Partie en cours</p>
