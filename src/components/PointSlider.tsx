@@ -5,7 +5,7 @@ import { Avatar } from './Avatar'
 import './pointslider.css'
 
 interface PointSliderProps {
-  /** Points réalisés par l'attaque, de 0 à 91 par pas de 0,5. */
+  /** Points réalisés par l'attaque, de 0 à 91, par points entiers. */
   value: number
   onChange: (value: number) => void
   /** Points que l'attaque doit atteindre, selon ses bouts. */
@@ -21,6 +21,12 @@ interface PointSliderProps {
  * portrait, à droite. L'encoche marque le contrat à réaliser et se déplace avec le nombre
  * de bouts : la franchir, c'est réussir. Le bouton « + » se trouve du côté du preneur, le
  * « − » du côté de la défense.
+ *
+ * La saisie se fait en points entiers. À quatre joueurs c'est exact : le preneur ramasse
+ * le chien puis des plis de quatre cartes, soit toujours un compte pair, donc un total
+ * entier. À trois et à cinq, un demi-point peut survenir — la table l'arrondit, comme
+ * beaucoup. Le moteur, lui, sait toujours calculer sur des demis : les donnes plus
+ * anciennes gardent leur valeur exacte.
  */
 export function PointSlider({
   value,
@@ -40,8 +46,7 @@ export function PointSlider({
   const thresholdRatio = threshold / TOTAL_POINTS
 
   const step = (delta: number) => {
-    const next = Math.min(TOTAL_POINTS, Math.max(0, value + delta))
-    onChange(Math.round(next * 2) / 2)
+    onChange(Math.min(TOTAL_POINTS, Math.max(0, Math.round(value) + delta)))
   }
 
   return (
@@ -74,8 +79,8 @@ export function PointSlider({
         <button
           type="button"
           className="slider__step"
-          onClick={() => step(-0.5)}
-          aria-label="Retirer un demi-point à l'attaque"
+          onClick={() => step(-1)}
+          aria-label="Retirer un point à l'attaque"
         >
           −
         </button>
@@ -96,7 +101,7 @@ export function PointSlider({
             type="range"
             min={0}
             max={TOTAL_POINTS}
-            step={0.5}
+            step={1}
             value={value}
             onChange={(event) => onChange(Number(event.target.value))}
             onPointerDown={() => setDragging(true)}
@@ -110,8 +115,8 @@ export function PointSlider({
         <button
           type="button"
           className="slider__step"
-          onClick={() => step(0.5)}
-          aria-label="Ajouter un demi-point à l'attaque"
+          onClick={() => step(1)}
+          aria-label="Ajouter un point à l'attaque"
         >
           +
         </button>
