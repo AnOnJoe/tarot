@@ -3,7 +3,7 @@ import { formatPoints } from '../engine/rules'
 import { cumulative } from '../engine/score'
 import { Avatar } from '../components/Avatar'
 import { Logo, TAGLINE } from '../components/Logo'
-import { Button, EmptyState, Screen } from '../components/ui'
+import { Button, EmptyState, Screen, Sheet } from '../components/ui'
 import {
   type Game,
   type Player,
@@ -24,6 +24,10 @@ interface GameSummary {
 
 interface HomeProps {
   onResume: (game: Game) => void
+  /** Consulter les statistiques d'une partie close, sans la rouvrir. */
+  onOpenGameStats: (game: Game) => void
+  /** Rouvrir une partie close : elle redevient la partie en cours. */
+  onReopen: (game: Game) => void
   onNewGame: () => void
   onOpenStats: () => void
   onOpenAchievements: () => void
@@ -39,6 +43,8 @@ const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', {
 
 export function Home({
   onResume,
+  onOpenGameStats,
+  onReopen,
   onNewGame,
   onOpenStats,
   onOpenAchievements,
@@ -47,6 +53,8 @@ export function Home({
 }: HomeProps) {
   const [summaries, setSummaries] = useState<GameSummary[]>([])
   const [loading, setLoading] = useState(true)
+  /** Partie close sur laquelle on vient d'appuyer, en attente d'un choix. */
+  const [chosen, setChosen] = useState<GameSummary | null>(null)
 
   const load = async () => {
     const games = await listGames()
@@ -135,7 +143,7 @@ export function Home({
                   key={summary.game.id}
                   type="button"
                   className="list__row"
-                  onClick={() => onResume(summary.game)}
+                  onClick={() => setChosen(summary)}
                   onContextMenu={(event) => {
                     event.preventDefault()
                     remove(summary.game)
@@ -165,6 +173,43 @@ export function Home({
         <EmptyState title="Aucune partie">
           <p>Créez votre table, et le compteur s'occupe du reste.</p>
         </EmptyState>
+      )}
+
+      {chosen && (
+        <Sheet
+          title={
+            chosen.players.length > 0
+              ? `Partie du ${DATE_FORMAT.format(chosen.game.startedAt)}`
+              : 'Partie terminée'
+          }
+          subtitle={
+            current && current.game.id !== chosen.game.id
+              ? `${chosen.dealCount} donne${chosen.dealCount > 1 ? 's' : ''}. La rouvrir clôturera la partie en cours.`
+              : `${chosen.dealCount} donne${chosen.dealCount > 1 ? 's' : ''}.`
+          }
+          onDismiss={() => setChosen(null)}
+        >
+          <Button
+            variant="primary"
+            onClick={() => {
+              onOpenGameStats(chosen.game)
+              setChosen(null)
+            }}
+          >
+            Voir les statistiques
+          </Button>
+          <Button
+            onClick={() => {
+              onReopen(chosen.game)
+              setChosen(null)
+            }}
+          >
+            Rouvrir la partie
+          </Button>
+          <Button variant="ghost" onClick={() => setChosen(null)}>
+            Annuler
+          </Button>
+        </Sheet>
       )}
 
       <p className="eyebrow">Réglages</p>

@@ -8,7 +8,13 @@ import { Home } from './screens/Home'
 import { NewGame } from './screens/NewGame'
 import { Rules } from './screens/Rules'
 import { Stats } from './screens/Stats'
-import { createGame, endGame, getCurrentGame, type Game as GameRecord } from './store/db'
+import {
+  createGame,
+  endGame,
+  getCurrentGame,
+  reopenGame,
+  type Game as GameRecord,
+} from './store/db'
 import { useRules } from './store/hooks'
 
 /**
@@ -135,6 +141,11 @@ export function App() {
         return (
           <Home
             onResume={(game) => setView({ name: 'partie', game })}
+            onOpenGameStats={(game) => setView({ name: 'stats', game, back: 'accueil' })}
+            onReopen={async (game) => {
+              const reopened = await reopenGame(game.id)
+              if (reopened) setView({ name: 'partie', game: reopened })
+            }}
             onNewGame={() => setView({ name: 'nouvelle' })}
             onOpenStats={() => setView({ name: 'stats', back: 'accueil' })}
             onOpenAchievements={() => setView({ name: 'hautsFaits' })}

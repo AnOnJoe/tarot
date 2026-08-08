@@ -134,6 +134,35 @@ export function Collapsible({
   )
 }
 
+/**
+ * Feuille surgissante, ancrée en bas de l'écran.
+ *
+ * Pour les choix qui appellent une décision sans mériter un écran : elle laisse voir d'où
+ * l'on vient, et un appui à côté revient en arrière — le geste de sortie le plus naturel
+ * au pouce.
+ */
+export function Sheet({
+  title,
+  subtitle,
+  onDismiss,
+  children,
+}: {
+  title: string
+  subtitle?: ReactNode
+  onDismiss: () => void
+  children: ReactNode
+}) {
+  return (
+    <div className="sheet" role="dialog" aria-label={title} onClick={onDismiss}>
+      <div className="sheet__panel" onClick={(event) => event.stopPropagation()}>
+        <p className="sheet__title">{title}</p>
+        {subtitle && <p className="sheet__subtitle">{subtitle}</p>}
+        <div className="sheet__actions">{children}</div>
+      </div>
+    </div>
+  )
+}
+
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="empty">

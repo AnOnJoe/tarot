@@ -155,6 +155,36 @@ export async function endGame(id: string): Promise<void> {
   if (current === id) await database.delete('settings', 'currentGameId')
 }
 
+/**
+ * Rouvre une partie close : elle redevient la partie en cours.
+ *
+ * L'accueil suppose qu'il n'y en a qu'une à la fois. Toute autre partie encore ouverte est
+ * donc close au passage — sans quoi deux parties se disputeraient la même place et l'une
+ * des deux deviendrait inatteignable.
+ */
+export async function reopenGame(id: string): Promise<Game | undefined> {
+  const database = await db()
+  const tx = database.transaction(['games', 'settings'], 'readwrite')
+  const games = tx.objectStore('games')
+
+  for (const game of await games.getAll()) {
+    if (game.id !== id && game.endedAt === null) {
+      await games.put({ ...game, endedAt: Date.now() })
+    }
+  }
+
+  const target = await games.get(id)
+  if (!target) {
+    await tx.done
+    return undefined
+  }
+  const reopened: Game = { ...target, endedAt: null }
+  await games.put(reopened)
+  await tx.objectStore('settings').put(id, 'currentGameId')
+  await tx.done
+  return reopened
+}
+
 export async function deleteGame(id: string): Promise<void> {
   const database = await db()
   const tx = database.transaction(['games', 'deals', 'settings'], 'readwrite')
