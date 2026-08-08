@@ -3,6 +3,7 @@ import { formatPoints } from '../engine/rules'
 import { cumulative } from '../engine/score'
 import { Avatar } from '../components/Avatar'
 import { Logo, TAGLINE } from '../components/Logo'
+import { SwipeToDelete } from '../components/SwipeToDelete'
 import { Button, Collapsible, EmptyState, Screen, Sheet } from '../components/ui'
 import {
   type Game,
@@ -93,6 +94,8 @@ export function Home({
   const [showAll, setShowAll] = useState(false)
   /** Parties terminées qui n'existent dans aucun fichier de sauvegarde. */
   const [unsaved, setUnsaved] = useState(0)
+  /** Partie dont le glissement est ouvert : une seule à la fois, comme dans iOS. */
+  const [swiped, setSwiped] = useState<string | null>(null)
 
   const load = async () => {
     const [games, lastBackupAt] = await Promise.all([listGames(), getLastBackupAt()])
@@ -122,9 +125,22 @@ export function Home({
     load()
   }, [])
 
-  const remove = async (game: Game) => {
-    if (!confirm('Supprimer cette partie et toutes ses donnes ?')) return
-    await deleteGame(game.id)
+  /**
+   * Suppression définitive d'une partie.
+   *
+   * Le décompte figure dans la question : « supprimer cette partie » se confirme à la
+   * légère, « supprimer 14 donnes » beaucoup moins. Rien ne la récupère ensuite, sinon une
+   * sauvegarde.
+   */
+  const remove = async (summary: GameSummary) => {
+    const donnes = `${summary.dealCount} donne${summary.dealCount > 1 ? 's' : ''}`
+    const quoi =
+      summary.game.endedAt === null
+        ? `Supprimer la partie en cours et ses ${donnes} ?`
+        : `Supprimer la partie du ${SHORT_FORMAT.format(summary.game.startedAt)} et ses ${donnes} ?`
+    if (!confirm(`${quoi} C'est définitif.`)) return
+    await deleteGame(summary.game.id)
+    setSwiped(null)
     await load()
   }
 
@@ -154,21 +170,28 @@ export function Home({
       {current && (
         <>
           <p className="eyebrow">Partie en cours</p>
-          <button type="button" className="resume" onClick={() => onResume(current.game)}>
-            <div className="resume__players">
-              {current.players.map((player) => (
-                <span key={player.id} className="resume__player">
-                  <Avatar player={player} size={40} />
-                  <span className="resume__score num display">
-                    {formatPoints(current.totals[player.id] ?? 0)}
+          <SwipeToDelete
+            open={swiped === current.game.id}
+            onOpenChange={(open) => setSwiped(open ? current.game.id : null)}
+            onDelete={() => remove(current)}
+            label="Supprimer la partie en cours"
+          >
+            <button type="button" className="resume" onClick={() => onResume(current.game)}>
+              <div className="resume__players">
+                {current.players.map((player) => (
+                  <span key={player.id} className="resume__player">
+                    <Avatar player={player} size={40} />
+                    <span className="resume__score num display">
+                      {formatPoints(current.totals[player.id] ?? 0)}
+                    </span>
                   </span>
-                </span>
-              ))}
-            </div>
-            <span className="resume__meta">
-              {current.dealCount} donne{current.dealCount > 1 ? 's' : ''} · reprendre
-            </span>
-          </button>
+                ))}
+              </div>
+              <span className="resume__meta">
+                {current.dealCount} donne{current.dealCount > 1 ? 's' : ''} · reprendre
+              </span>
+            </button>
+          </SwipeToDelete>
         </>
       )}
 
@@ -187,30 +210,33 @@ export function Home({
                 undefined,
               )
               return (
-                <button
+                <SwipeToDelete
                   key={summary.game.id}
-                  type="button"
-                  className="list__row"
-                  onClick={() => setChosen(summary)}
-                  onContextMenu={(event) => {
-                    event.preventDefault()
-                    remove(summary.game)
-                  }}
+                  open={swiped === summary.game.id}
+                  onOpenChange={(open) => setSwiped(open ? summary.game.id : null)}
+                  onDelete={() => remove(summary)}
+                  label={`Supprimer la partie du ${SHORT_FORMAT.format(summary.game.startedAt)}`}
                 >
-                  {winner && <Avatar player={winner} size={34} />}
-                  <span className="list__grow">
-                    <span className="list__title">
-                      {winner ? `${winner.name} l'emporte` : 'Partie'}
+                  <button
+                    type="button"
+                    className="list__row"
+                    onClick={() => setChosen(summary)}
+                  >
+                    {winner && <Avatar player={winner} size={34} />}
+                    <span className="list__grow">
+                      <span className="list__title">
+                        {winner ? `${winner.name} l'emporte` : 'Partie'}
+                      </span>
+                      <span className="list__meta">
+                        {SHORT_FORMAT.format(summary.game.startedAt)} · {summary.dealCount}{' '}
+                        donne{summary.dealCount > 1 ? 's' : ''}
+                      </span>
                     </span>
-                    <span className="list__meta">
-                      {SHORT_FORMAT.format(summary.game.startedAt)} · {summary.dealCount} donne
-                      {summary.dealCount > 1 ? 's' : ''}
+                    <span className="list__meta num">
+                      {winner ? formatPoints(summary.totals[winner.id] ?? 0) : ''}
                     </span>
-                  </span>
-                  <span className="list__meta num">
-                    {winner ? formatPoints(summary.totals[winner.id] ?? 0) : ''}
-                  </span>
-                </button>
+                  </button>
+                </SwipeToDelete>
               )
             })}
           </div>
@@ -263,6 +289,18 @@ export function Home({
             }}
           >
             Rouvrir la partie
+          </Button>
+          {/* Le glissement ne s'annonce pas : qui ne le connaît pas trouve la suppression
+              ici, où il vient déjà choisir quoi faire de la partie. */}
+          <Button
+            variant="danger"
+            onClick={() => {
+              const target = chosen
+              setChosen(null)
+              remove(target)
+            }}
+          >
+            Supprimer la partie
           </Button>
           <Button variant="ghost" onClick={() => setChosen(null)}>
             Annuler

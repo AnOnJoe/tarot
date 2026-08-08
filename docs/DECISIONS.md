@@ -182,6 +182,26 @@ pas être. **La distinction est portée par les types**, pas par une convention.
 camps. Le modèle « territoire » — pousser la ligne dans le camp adverse — était cohérent
 mais contre-intuitif : on glisse à droite pour faire monter un score.
 
+**Supprimer une partie se glisse, et se trouve aussi sans le geste.** Le glissement vers la
+gauche est celui des listes iOS, donc appris d'avance — mais un geste ne s'annonce pas : la
+feuille de choix d'une partie terminée porte la même action, pour qui ne le connaît pas. La
+version précédente s'en remettait à un `contextmenu`, que Safari sur iOS ne déclenche pas :
+la suppression y était donc **inatteignable**.
+
+Le composant porte `touch-action: pan-y` et non `none` : seule l'horizontale est prise en
+charge, la page doit continuer de défiler sous le doigt. La direction se tranche au
+huitième pixel, et un geste vertical rend la main pour de bon.
+
+Deux pièges, tous deux trouvés en simulant un vrai doigt et non en relisant le code :
+
+- Un glissement se termine par un `click` que le navigateur envoie quand même. Sans garde,
+  refermer une rangée rouvrait la partie qu'on venait d'écarter — mais une garde qui ne
+  s'arme que sur un drapeau **avale le premier appui sur *Supprimer***, c'est-à-dire
+  exactement le geste qu'on vient de découvrir. Elle expire donc, et **n'entrave jamais le
+  bouton découvert**.
+- Refermer la rangée au moment d'ouvrir la confirmation oblige à tout recommencer si l'on
+  renonce. Elle reste ouverte, et ne se referme qu'une fois la partie supprimée.
+
 **Le glisser-déposer se prend à une poignée**, pas sur la ligne entière : la poignée porte
 `touch-action: none`, sans quoi iOS interprète le geste comme un défilement. La restreindre
 laisse le reste de l'écran défiler.

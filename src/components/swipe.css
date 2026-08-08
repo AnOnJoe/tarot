@@ -1,0 +1,58 @@
+/*
+ * Glissement vers la gauche pour découvrir une suppression.
+ *
+ * `pan-y` et non `none` : seule l'horizontale est prise en charge ici, la page doit
+ * continuer de défiler sous le doigt.
+ */
+.swipe {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-card);
+  touch-action: pan-y;
+}
+
+/*
+ * Sous le contenu, immobile : c'est la rangée qui coulisse, pas le bouton qui entre.
+ *
+ * L'encre suit le thème et non l'inverse : `--neg` est un rouge clair sur fond sombre et un
+ * rouge soutenu sur fond clair. La même encre sur les deux serait illisible sur l'un.
+ */
+.swipe__delete {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: var(--neg);
+  color: #1a0b0b;
+  font-size: 14px;
+  font-weight: 620;
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: light) {
+  .swipe__delete {
+    color: #fff;
+  }
+}
+
+/* Opaque, sans quoi le rouge se lirait au travers de la rangée qui coulisse dessus. */
+.swipe__content {
+  position: relative;
+  background: var(--surface);
+  will-change: transform;
+}
+
+/*
+ * Dans une liste, c'est le conteneur qui porte les coins et le découpage : les arrondir
+ * aussi ici découperait chaque rangée au milieu de la pile.
+ */
+.list .swipe {
+  border-radius: 0;
+}
+
+/* Le trait de séparation suivait `.list__row + .list__row` ; l'enveloppe s'intercale. */
+.list .swipe + .swipe .list__row {
+  box-shadow: inset 0 1px 0 var(--line);
+}

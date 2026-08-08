@@ -72,6 +72,11 @@ recharge si une nouvelle version est en ligne.
   commande la rotation du donneur : s'être trompé en composant la table décale tous les
   donneurs suivants.
 - **Une partie close par erreur** — la toucher à l'accueil, puis *Rouvrir la partie*.
+- **Une partie à supprimer** — la **glisser vers la gauche** à l'accueil découvre
+  *Supprimer* ; la même action figure dans la feuille qui s'ouvre en touchant une partie
+  terminée. La partie en cours se supprime de la même façon. La suppression demande
+  confirmation, annonce le nombre de donnes perdues, et **rien ne la rattrape** sinon une
+  sauvegarde.
 
 ---
 
