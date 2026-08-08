@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { PlayerId } from '../engine/types'
 import { Avatar } from '../components/Avatar'
+import { useReorder } from '../components/useReorder'
 import { Button, Eyebrow, Screen, TopAction } from '../components/ui'
 import type { Player } from '../store/db'
 import './seating.css'
@@ -22,8 +23,8 @@ interface SeatingProps {
  * S'être trompé en composant la table décale donc tous les donneurs suivants, d'où la
  * possibilité de rectifier sans perdre la partie en cours.
  *
- * Des flèches plutôt qu'un glisser-déposer : à quatre ou cinq lignes, déplacer au doigt
- * dans une liste courte rate sa cible plus souvent qu'il ne l'atteint.
+ * Le déplacement se fait à la poignée, et non sur la ligne entière : l'écran défile, et une
+ * ligne entière insensible au défilement empêcherait de le faire glisser au doigt.
  */
 export function Seating({
   players,
@@ -34,14 +35,7 @@ export function Seating({
 }: SeatingProps) {
   const [order, setOrder] = useState<Player[]>(players)
   const [nextDealerId, setNextDealerId] = useState<PlayerId>(currentNextDealerId)
-
-  const move = (index: number, delta: number) => {
-    const target = index + delta
-    if (target < 0 || target >= order.length) return
-    const next = [...order]
-    ;[next[index], next[target]] = [next[target], next[index]]
-    setOrder(next)
-  }
+  const { drag, handleProps } = useReorder(order, setOrder)
 
   const save = () => {
     const playerIds = order.map((p) => p.id)
@@ -71,32 +65,36 @@ export function Seating({
 
       <Eyebrow>Ordre de la table</Eyebrow>
       <div className="seating__list">
-        {order.map((player, index) => (
-          <div key={player.id} className="seating__row">
-            <span className="seating__rank num">{index + 1}</span>
-            <Avatar player={player} size={38} />
-            <span className="seating__name">{player.name}</span>
-            <button
-              type="button"
-              className="seating__move"
-              onClick={() => move(index, -1)}
-              disabled={index === 0}
-              aria-label={`Monter ${player.name}`}
+        {order.map((player, index) => {
+          const held = drag?.index === index
+          return (
+            <div
+              key={player.id}
+              data-row
+              className="seating__row"
+              data-held={held || undefined}
+              style={held ? { transform: `translateY(${drag.offset}px)` } : undefined}
             >
-              ↑
-            </button>
-            <button
-              type="button"
-              className="seating__move"
-              onClick={() => move(index, 1)}
-              disabled={index === order.length - 1}
-              aria-label={`Descendre ${player.name}`}
-            >
-              ↓
-            </button>
-          </div>
-        ))}
+              <span className="seating__rank num">{index + 1}</span>
+              <Avatar player={player} size={38} />
+              <span className="seating__name">{player.name}</span>
+              <button
+                type="button"
+                className="seating__grip"
+                aria-label={`Déplacer ${player.name}. Flèches haut et bas pour changer sa place.`}
+                {...handleProps(index)}
+              >
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  {[6, 10, 14].map((y) =>
+                    [7, 13].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5" />),
+                  )}
+                </svg>
+              </button>
+            </div>
+          )
+        })}
       </div>
+      <p className="hint">Tirez la poignée pour changer l'ordre.</p>
 
       <Eyebrow>Qui donne la prochaine donne</Eyebrow>
       <div className="pickRow">
