@@ -31,12 +31,18 @@ const SLAM_LABELS: Record<SlamState, string> = {
   annonceChute: 'Annoncé et chuté',
 }
 
+/**
+ * Donne en cours de saisie. Le preneur peut être indéterminé, ce qu'une donne enregistrée
+ * ne peut pas être : c'est toute la différence entre un brouillon et un résultat.
+ */
+export type DealDraft = Omit<ContractDeal, 'takerId'> & { takerId: PlayerId | null }
+
 interface DealEntryProps {
   players: Player[]
   rules: RuleSet
   dealNumber: number
   /** Donne existante rouverte pour correction, ou brouillon pour une nouvelle donne. */
-  initial: ContractDeal
+  initial: DealDraft
   onCancel: () => void
   onSubmit: (deal: ContractDeal) => void
   onDelete?: () => void
@@ -44,12 +50,18 @@ interface DealEntryProps {
   onSwitchToVachette?: () => void
 }
 
-/** Brouillon d'une donne, prêt à être édité, avec le preneur déjà désigné. */
-export function draftDeal(takerId: PlayerId): ContractDeal {
+/**
+ * Brouillon d'une nouvelle donne, sans preneur.
+ *
+ * Personne n'est présélectionné à dessein : proposer un preneur par défaut, c'est risquer
+ * qu'une donne soit validée au nom de quelqu'un qui n'a pas pris. Le choix doit être un
+ * geste, pas une confirmation tacite.
+ */
+export function draftDeal(): DealDraft {
   return {
     kind: 'contrat',
     contract: 'garde',
-    takerId,
+    takerId: null,
     partnerId: null,
     oudlers: 1,
     attackPoints: 51,
@@ -74,21 +86,28 @@ export function DealEntry({
   onDelete,
   onSwitchToVachette,
 }: DealEntryProps) {
-  const [deal, setDeal] = useState<ContractDeal>(initial)
-  const patch = (changes: Partial<ContractDeal>) =>
+  const [deal, setDeal] = useState<DealDraft>(initial)
+  const patch = (changes: Partial<DealDraft>) =>
     setDeal((current) => ({ ...current, ...changes }))
 
   const playerIds = players.map((p) => p.id)
   const taker = players.find((p) => p.id === deal.takerId)
   const isFivePlayers = players.length === 5
   const hasPartner = deal.partnerId !== null && deal.partnerId !== deal.takerId
-  const defenders = players.filter(
-    (p) => p.id !== deal.takerId && !(hasPartner && p.id === deal.partnerId),
-  )
+  // Sans preneur, il n'y a pas de défense : la rangée reste vide plutôt que d'afficher
+  // toute la table du côté des défenseurs.
+  const defenders = taker
+    ? players.filter((p) => p.id !== deal.takerId && !(hasPartner && p.id === deal.partnerId))
+    : []
 
-  const breakdown = useMemo(() => contractBreakdown(deal, rules), [deal, rules])
+  // L'assiette du contrat ne dépend pas du preneur : elle s'affiche dès le départ.
+  const breakdown = useMemo(() => contractBreakdown({ ...deal, takerId: '' }, rules), [deal, rules])
+  // La répartition, elle, en dépend : sans preneur désigné, il n'y a rien à répartir.
   const scores = useMemo(
-    () => scoreDeal(deal, playerIds, rules),
+    () =>
+      deal.takerId === null
+        ? null
+        : scoreDeal({ ...deal, takerId: deal.takerId }, playerIds, rules),
     // playerIds est recalculé à chaque rendu ; sa valeur ne change que si players change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [deal, players, rules],
@@ -144,8 +163,17 @@ export function DealEntry({
         )
       }
       footer={
-        <Button variant="primary" onClick={() => onSubmit(deal)}>
-          Valider · {formatSigned(scores[deal.takerId] ?? 0)} pour {taker?.name}
+        <Button
+          variant="primary"
+          disabled={!taker || !scores}
+          onClick={() => {
+            if (deal.takerId === null) return
+            onSubmit({ ...deal, takerId: deal.takerId })
+          }}
+        >
+          {taker && scores
+            ? `Valider · ${formatSigned(scores[deal.takerId!] ?? 0)} pour ${taker.name}`
+            : 'Désignez le preneur'}
         </Button>
       }
     >
@@ -169,12 +197,15 @@ export function DealEntry({
               player={player}
               size={46}
               highlighted={player.id === deal.takerId}
-              dimmed={player.id !== deal.takerId}
+              // Tant que personne n'est désigné, aucun portrait n'est retenu ni écarté :
+              // rien ne doit ressembler à un choix déjà fait.
+              dimmed={taker ? player.id !== deal.takerId : false}
             />
             <span className="pick__name">{player.name}</span>
           </button>
         ))}
       </div>
+      {!taker && <p className="hint">Touchez celui qui a pris la donne.</p>}
 
       <Eyebrow>Contrat</Eyebrow>
       <div className="chips chips--contracts">
@@ -371,16 +402,20 @@ export function DealEntry({
         <Line label="Une part" value={formatSigned(breakdown.unit)} strong />
       </div>
 
-      <div className="detail detail--scores">
-        {players.map((player) => (
-          <Line
-            key={player.id}
-            label={player.name}
-            value={formatSigned(scores[player.id] ?? 0)}
-            strong
-          />
-        ))}
-      </div>
+      {/* La répartition ne s'affiche qu'une fois le preneur désigné : sans lui, il n'y a
+          rien à répartir, et un tableau de zéros laisserait croire à un calcul. */}
+      {scores && (
+        <div className="detail detail--scores">
+          {players.map((player) => (
+            <Line
+              key={player.id}
+              label={player.name}
+              value={formatSigned(scores[player.id] ?? 0)}
+              strong
+            />
+          ))}
+        </div>
+      )}
     </Screen>
   )
 }

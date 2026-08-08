@@ -21,16 +21,15 @@ interface ScoreTableProps {
   totals: Record<PlayerId, number>
   /** Joueur qui donne la prochaine donne. */
   nextDealerId: PlayerId
-  /** Ouvre la saisie d'une donne avec ce joueur comme preneur. */
-  onTake: (takerId: PlayerId) => void
   onOpenDeal: (deal: Deal) => void
 }
 
 /**
  * Le tableau de la partie : une colonne par joueur, une ligne par donne.
  *
- * La tuile entière d'un joueur est la cible tactile qui ouvre une donne dont il est
- * preneur — désigner qui a pris et saisir la donne sont le même geste.
+ * Les tuiles de joueurs ne sont pas cliquables : ouvrir une donne passe uniquement par le
+ * bouton « Nouvelle donne ». Un portrait qui déclenche une saisie invite à désigner le
+ * preneur d'un geste réflexe, et donc à se tromper.
  *
  * Gain et perte se lisent à la couleur du chiffre, pas à un aplat derrière : l'information
  * passe aussi bien et le tableau reste léger même sur vingt donnes.
@@ -40,7 +39,6 @@ export function ScoreTable({
   deals,
   totals,
   nextDealerId,
-  onTake,
   onOpenDeal,
 }: ScoreTableProps) {
   const columns = `26px repeat(${players.length}, minmax(0, 1fr))`
@@ -59,7 +57,6 @@ export function ScoreTable({
             total={totals[player.id] ?? 0}
             isDealer={player.id === nextDealerId}
             totalSize={totalSize}
-            onTake={() => onTake(player.id)}
           />
         ))}
       </div>
@@ -111,30 +108,22 @@ function PlayerTile({
   total,
   isDealer,
   totalSize,
-  onTake,
 }: {
   player: Player
   total: number
   isDealer: boolean
   totalSize: number
-  onTake: () => void
 }) {
   const shown = useAnimatedNumber(total)
 
   return (
-    <button
-      type="button"
-      className="tile-btn table__tile"
-      data-dealer={isDealer || undefined}
-      onClick={onTake}
-    >
+    <div className="table__tile" data-dealer={isDealer || undefined}>
       {isDealer && <span className="table__badge">donne</span>}
       <Avatar player={player} size={34} />
       <span className="table__name">{player.name}</span>
       <span className="table__total num display" style={{ fontSize: totalSize }}>
         {formatPoints(shown)}
       </span>
-      <span className="sr-only">{player.name} prend</span>
-    </button>
+    </div>
   )
 }

@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { dealHighlights } from '../engine/achievements'
 import { contractBreakdown, scoreDeal } from '../engine/score'
-import type { ContractDeal, Deal, DealInput, PlayerId, RuleSet } from '../engine/types'
+import type { Deal, DealInput, PlayerId, RuleSet } from '../engine/types'
 import { DealReveal, type RevealData } from '../components/DealReveal'
 import { ScoreTable } from '../components/ScoreTable'
 import { Button, EmptyState, Screen, TopAction } from '../components/ui'
 import { updateSeating, type Game as GameRecord } from '../store/db'
 import { useGame } from '../store/hooks'
-import { DealEntry, draftDeal } from './DealEntry'
+import { DealEntry, draftDeal, type DealDraft } from './DealEntry'
 import { Seating } from './Seating'
 import { Vachette } from './Vachette'
 import './game.css'
@@ -25,7 +25,7 @@ interface GameProps {
 /** Ce que l'écran affiche : le tableau, ou l'une des deux saisies de donne. */
 type Mode =
   | { view: 'table' }
-  | { view: 'contrat'; deal: ContractDeal; editing?: Deal }
+  | { view: 'contrat'; deal: DealDraft; editing?: Deal }
   | { view: 'vachette'; editing?: Deal }
   | { view: 'ordre' }
 
@@ -39,8 +39,8 @@ function leaderOf(totals: Record<PlayerId, number>): PlayerId | null {
 }
 
 /**
- * Écran de partie : le tableau des donnes et tout ce qui s'y rattache. Toucher un joueur
- * ouvre une donne dont il est preneur ; l'entrée « Table » corrige l'ordre de la table.
+ * Écran de partie : le tableau des donnes et tout ce qui s'y rattache. Une donne s'ouvre
+ * par le bouton du bas ; l'entrée « Table » corrige l'ordre de la table.
  */
 export function Game({
   game,
@@ -150,9 +150,6 @@ export function Game({
     )
   }
 
-  const startContract = (takerId: PlayerId) =>
-    setMode({ view: 'contrat', deal: draftDeal(takerId) })
-
   return (
     <Screen
       title={`${state.deals.length} donne${state.deals.length > 1 ? 's' : ''}`}
@@ -167,7 +164,7 @@ export function Game({
         <>
           <Button
             variant="primary"
-            onClick={() => startContract(state.nextDealerId)}
+            onClick={() => setMode({ view: 'contrat', deal: draftDeal() })}
           >
             Nouvelle donne
           </Button>
@@ -182,14 +179,14 @@ export function Game({
         deals={state.deals}
         totals={state.totals}
         nextDealerId={state.nextDealerId}
-        onTake={startContract}
         onOpenDeal={openDeal}
       />
 
       {state.deals.length === 0 && (
         <EmptyState title="La partie commence">
           <p>
-            Touchez le joueur qui a pris pour saisir la donne. Le liseré indique qui donne.
+            Touchez <strong>Nouvelle donne</strong> à chaque main jouée. Le liseré indique
+            qui donne.
           </p>
         </EmptyState>
       )}
