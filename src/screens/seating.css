@@ -1,0 +1,63 @@
+.seating__note {
+  margin-top: 18px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.seating__list {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+.seating__row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+}
+
+.seating__row + .seating__row {
+  box-shadow: inset 0 1px 0 var(--line);
+}
+
+.seating__rank {
+  width: 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-faint);
+}
+
+.seating__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Cibles larges : on déplace au pouce, souvent une main occupée par les cartes. */
+.seating__move {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 120ms cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.seating__move:active:not(:disabled) {
+  transform: scale(0.92);
+  background: var(--surface-3);
+}
+
+.seating__move:disabled {
+  opacity: 0.25;
+}

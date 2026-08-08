@@ -5,9 +5,10 @@ import type { ContractDeal, Deal, DealInput, PlayerId, RuleSet } from '../engine
 import { DealReveal, type RevealData } from '../components/DealReveal'
 import { ScoreTable } from '../components/ScoreTable'
 import { Button, EmptyState, Screen, TopAction } from '../components/ui'
-import type { Game as GameRecord } from '../store/db'
+import { updateSeating, type Game as GameRecord } from '../store/db'
 import { useGame } from '../store/hooks'
 import { DealEntry, draftDeal } from './DealEntry'
+import { Seating } from './Seating'
 import { Vachette } from './Vachette'
 import './game.css'
 
@@ -17,6 +18,8 @@ interface GameProps {
   onExit: () => void
   onEnd: () => void
   onOpenStats: () => void
+  /** L'ordre de la table a changé : la vue parente doit repartir du nouvel enregistrement. */
+  onGameUpdated: (game: GameRecord) => void
 }
 
 /** Ce que l'écran affiche : le tableau, ou l'une des deux saisies de donne. */
@@ -24,11 +27,8 @@ type Mode =
   | { view: 'table' }
   | { view: 'contrat'; deal: ContractDeal; editing?: Deal }
   | { view: 'vachette'; editing?: Deal }
+  | { view: 'ordre' }
 
-/**
- * Écran de partie : le tableau des donnes, et le point d'entrée vers la saisie.
- * Prendre la donne se fait depuis le « + » sous le portrait du preneur.
- */
 /** Joueur en tête, ou `null` si personne ne se détache. */
 function leaderOf(totals: Record<PlayerId, number>): PlayerId | null {
   const entries = Object.entries(totals)
@@ -38,7 +38,18 @@ function leaderOf(totals: Record<PlayerId, number>): PlayerId | null {
   return tied.length > 1 ? null : best[0]
 }
 
-export function Game({ game, rules, onExit, onEnd, onOpenStats }: GameProps) {
+/**
+ * Écran de partie : le tableau des donnes et tout ce qui s'y rattache. Toucher un joueur
+ * ouvre une donne dont il est preneur ; l'entrée « Table » corrige l'ordre de la table.
+ */
+export function Game({
+  game,
+  rules,
+  onExit,
+  onEnd,
+  onOpenStats,
+  onGameUpdated,
+}: GameProps) {
   const state = useGame(game, rules)
   const [mode, setMode] = useState<Mode>({ view: 'table' })
   const [reveal, setReveal] = useState<RevealData | null>(null)
@@ -123,6 +134,22 @@ export function Game({ game, rules, onExit, onEnd, onOpenStats }: GameProps) {
     )
   }
 
+  if (mode.view === 'ordre') {
+    return (
+      <Seating
+        players={state.players}
+        dealCount={state.deals.length}
+        currentNextDealerId={state.nextDealerId}
+        onCancel={backToTable}
+        onSave={async (playerIds, firstDealerIndex) => {
+          const updated = await updateSeating(game.id, playerIds, firstDealerIndex)
+          if (updated) onGameUpdated(updated)
+          backToTable()
+        }}
+      />
+    )
+  }
+
   const startContract = (takerId: PlayerId) =>
     setMode({ view: 'contrat', deal: draftDeal(takerId) })
 
@@ -131,9 +158,10 @@ export function Game({ game, rules, onExit, onEnd, onOpenStats }: GameProps) {
       title={`${state.deals.length} donne${state.deals.length > 1 ? 's' : ''}`}
       left={<TopAction onClick={onExit}>Parties</TopAction>}
       right={
-        <TopAction onClick={onOpenStats} align="end">
-          Stats
-        </TopAction>
+        <span className="game__actions">
+          <TopAction onClick={() => setMode({ view: 'ordre' })}>Table</TopAction>
+          <TopAction onClick={onOpenStats}>Stats</TopAction>
+        </span>
       }
       footer={
         <>

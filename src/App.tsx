@@ -88,6 +88,7 @@ export function App() {
             game={view.game}
             rules={rules}
             onExit={() => setView({ name: 'accueil' })}
+            onGameUpdated={(game) => setView({ name: 'partie', game })}
             onOpenStats={() => setView({ name: 'stats', game: view.game, back: 'partie' })}
             onEnd={async () => {
               await endGame(view.game.id)

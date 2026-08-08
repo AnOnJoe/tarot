@@ -1,4 +1,11 @@
 /*
- * L'écran de partie n'a pas de style propre : le tableau déborde sur toute la largeur via
- * une marge négative (cf. scoretable.css), et la barre d'action basse est celle du thème.
+ * Le tableau déborde sur toute la largeur via une marge négative (cf. scoretable.css),
+ * et la barre d'action basse est celle du thème.
  */
+
+/* Deux entrées dans la cellule droite de la barre de titre, alignées à sa marge. */
+.game__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}

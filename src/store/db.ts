@@ -127,6 +127,25 @@ export async function createGame(
   return game
 }
 
+/**
+ * Corrige l'ordre de la table en cours de partie, et qui donnera la prochaine donne.
+ *
+ * Les donnes déjà jouées gardent le donneur enregistré au moment de leur validation :
+ * l'ordre pilote la rotation à venir, il ne réécrit pas ce qui s'est passé.
+ */
+export async function updateSeating(
+  gameId: string,
+  playerIds: PlayerId[],
+  firstDealerIndex: number,
+): Promise<Game | undefined> {
+  const database = await db()
+  const game = await database.get('games', gameId)
+  if (!game) return undefined
+  const updated: Game = { ...game, playerIds, firstDealerIndex }
+  await database.put('games', updated)
+  return updated
+}
+
 export async function endGame(id: string): Promise<void> {
   const database = await db()
   const game = await database.get('games', id)
