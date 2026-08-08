@@ -1,0 +1,197 @@
+# Choix d'implémentation
+
+Ce que le code ne dit pas de lui-même : pourquoi telle solution plutôt qu'une autre, et
+quels pièges elle évite. Rangé par domaine, du plus structurant au plus local.
+
+---
+
+## Une PWA, pas une application native
+
+Le sideload iOS sans compte Apple Developer (99 €/an) impose de rebrancher chaque iPhone à
+un Mac toutes les semaines : le certificat expire au bout de sept jours. Rédhibitoire pour
+des installations chez des tiers.
+
+Une PWA installée sur l'écran d'accueil offre l'icône, le plein écran, le hors-ligne et la
+persistance des données, sans renouvellement ni validation. Ce qu'on perd — Face ID,
+notifications système, retour haptique — n'a aucun usage ici.
+
+---
+
+## Le moteur de calcul est isolé
+
+`src/engine/` ne dépend ni de React, ni du DOM, ni de la base. C'est la seule partie qui
+doit être irréprochable : un compteur qui compte faux ne sert à rien.
+
+Conséquences pratiques : il se teste sans navigateur, et resterait portable tel quel vers
+une version native.
+
+**L'invariant central** — la somme des scores d'une donne vaut exactement zéro — est
+vérifié sur 900 donnes générées aléatoirement, à 3, 4 et 5 joueurs, tous contrats et
+annonces confondus. C'est ce test qui a le plus de valeur du projet.
+
+### Les quarts de point sont conservés
+
+La Pousse à ×1,5 sur une assiette entière produit des demis, et à trois défenseurs des
+quarts. Les arrondir romprait l'invariant : la somme cesserait de valoir zéro.
+
+Ils sont donc gardés, et c'est l'affichage qui s'adapte — partie entière en grand, décimale
+en petit corps.
+
+### Les scores sont figés à la validation
+
+`Deal.scores` est calculé une fois et stocké. Changer un barème en cours de partie ne
+réécrit donc pas l'histoire : seules les donnes suivantes suivent le nouveau barème.
+
+---
+
+## Couleurs : mesurer plutôt que choisir à l'œil
+
+Trois fois dans ce projet une couleur choisie à l'œil s'est révélée trop proche d'une autre
+à la mesure. Le protocole est désormais systématique.
+
+**La palette des joueurs** vient d'un jeu catégoriel validé pour le daltonisme. *L'ordre des
+teintes est le mécanisme de sécurité*, pas une question de goût : le permuter casse les
+écarts entre teintes voisines. Elle a été revalidée contre les deux surfaces de
+l'application (`scripts/validate_palette.js` de la compétence dataviz).
+
+**L'accent de l'interface ne doit jamais se lire comme l'identité d'un joueur.** Chaque
+candidat est mesuré en ΔE OKLab contre les huit teintes de joueur :
+
+| Accent | Écart minimal | Verdict |
+|---|---|---|
+| Violet `#8b7cff` | ΔE 4,3 | Rejeté — confondu avec le joueur violet |
+| Rouge `#e8564a` | ΔE 3,8 | Rejeté — confondu avec le joueur rouge |
+| Lavande `#c4bcff` | ΔE 16,4 | Retenu un temps |
+| **Corail `#ffab9d`** | **ΔE 16,1** | **Retenu** (mode sombre) |
+| **Grenat `#a81f19`** | **ΔE 14,9** | **Retenu** (mode clair) |
+
+Le rouge saturé de la marque (`--brand`) échappe à cette règle : il ne sert qu'au logo, où
+rien ne peut le confondre avec un joueur.
+
+**Les couleurs de rang** (or, argent, bronze) voisinent délibérément la palette : le rang
+est *toujours* écrit en chiffre, la teinte ne fait que le doubler. Le bronze a tout de même
+été écarté de l'orange, de ΔE 6,3 à 12.
+
+---
+
+## Synchronisation entre deux carnets
+
+### Le tag identifie une personne, l'`id` identifie un enregistrement
+
+Un joueur porte un UUID tiré localement. Deux personnes qui saisissent « Joachim » chacune
+de leur côté obtiennent deux inconnus : aucun rapprochement n'est possible.
+
+Le **tag** — six signes dictables, `K7M-2PQ` — est la clé de rapprochement. Il se modifie
+depuis le carnet, ce qui est tout son intérêt : on recopie chez soi celui de l'autre.
+
+Son alphabet exclut `I`, `L`, `O`, et donc aussi `0` et `1`. Un test a attrapé le `L` que
+la première version avait laissé passer.
+
+### La fusion n'écrase rien
+
+Ce qui existe des deux côtés reste dans sa version **locale** ; ce qui n'existe que d'un
+côté est ajouté. C'est le sens même d'une synchronisation entre deux personnes qui ont
+chacune leur historique.
+
+Quand un tag correspond, **toutes** les références de l'autre appareil sont réécrites vers
+l'identifiant local : parties, donneurs, preneurs, appelés, poignées, misères, clés de
+scores, points de vachette.
+
+Les donnes d'une partie reçue sont **renumérotées par ordre de création** : deux personnes
+ayant marqué la même partie en parallèle produiraient sinon deux donnes de même rang.
+
+L'opération est **idempotente** — fusionner deux fois le même fichier n'ajoute rien.
+
+### Les barèmes restent locaux
+
+Ce sont des réglages d'appareil, pas de l'historique. Les écraser changerait le calcul des
+donnes à venir sans que personne l'ait demandé.
+
+---
+
+## Service worker : la mise à jour n'arrive pas toute seule
+
+L'enregistrement par défaut ne cherche une nouvelle version qu'à une **navigation**. Or une
+application installée sur l'écran d'accueil iOS est *reprise*, pas rechargée : aucune
+navigation ne survient jamais, et la version installée peut tenir indéfiniment.
+
+`src/pwa.ts` ajoute donc trois déclencheurs : contrôle au retour au premier plan, contrôle
+horaire, et rechargement dès qu'un nouveau service worker prend la main.
+
+**Le piège du premier chargement** : `controllerchange` recouvre deux situations. À la
+première visite il n'y a aucun contrôleur — la page vient du réseau, elle est déjà à jour,
+la recharger n'apporte qu'un clignotement. Seul le *remplacement* d'un contrôleur existant
+justifie un rechargement.
+
+---
+
+## Photos : `data:` plutôt qu'`URL.createObjectURL`
+
+Une URL d'objet doit être révoquée au démontage. Chaque lecture en base rend de nouveaux
+Blob : quand une liste se recharge, l'ancien Blob change d'identité, l'effet se rejoue et
+révoque l'URL précédente. L'image qui la portait encore reste vide, et ne s'en remet qu'à un
+remontage complet du composant.
+
+Symptôme observé : un portrait absent, qui réapparaît après un aller-retour vers un autre
+écran.
+
+Les photos passent donc en `data:` URL, qui n'ont aucun cycle de vie. Elles font 256 px et
+quelques kilo-octets ; un cache faible indexé par Blob évite de reconvertir à chaque
+affichage.
+
+---
+
+## Migrations IndexedDB
+
+Une transaction de migration se referme dès qu'on lui rend la main. Des écritures
+programmées dans un `.then` détaché peuvent arriver après sa fermeture — **silencieusement,
+et sans seconde chance**, puisqu'une migration ne se rejoue jamais.
+
+La migration v1 → v2 (attribution des tags) parcourt donc les joueurs au curseur, en
+chaînant les promesses sans jamais rendre la main.
+
+---
+
+## Décisions d'interface
+
+**Aucun preneur n'est présélectionné** à l'ouverture d'une donne, et aucun portrait n'est
+ni retenu ni écarté tant que le choix n'est pas fait : rien ne doit ressembler à une
+décision déjà prise. Tant qu'aucun preneur n'est désigné, le bouton reste inactif et la
+répartition ne s'affiche pas — un tableau de zéros laisserait croire à un calcul.
+
+Le type du brouillon autorise un preneur indéterminé, ce qu'une donne enregistrée ne peut
+pas être. **La distinction est portée par les types**, pas par une convention.
+
+**Le curseur est une barre de progression vers le contrat**, pas une frontière entre deux
+camps. Le modèle « territoire » — pousser la ligne dans le camp adverse — était cohérent
+mais contre-intuitif : on glisse à droite pour faire monter un score.
+
+**Le glisser-déposer se prend à une poignée**, pas sur la ligne entière : la poignée porte
+`touch-action: none`, sans quoi iOS interprète le geste comme un défilement. La restreindre
+laisse le reste de l'écran défiler.
+
+**La taille du cumul est déduite de la place mesurée** et de la longueur du nombre, pas
+fixée à l'avance. C'est la longueur qui contraint, pas le nombre de joueurs : à quatre,
+`150` tient en 35 px là où `−422,25` plafonne à 15.
+
+**Rouvrir une partie close clôt toute autre partie ouverte.** L'accueil suppose une seule
+partie en cours ; sans cela, deux parties se disputeraient la même place et l'une
+deviendrait inatteignable.
+
+**Les hauts faits ne sont pas stockés**, ils se recalculent depuis les donnes. Corriger une
+donne retire donc le haut fait qu'elle avait fait décrocher — ce qui vaut mieux qu'un
+tableau de chasse qui mentirait.
+
+---
+
+## Ce qui a été mesuré plutôt que supposé
+
+Les vérifications suivantes tournent contre le site **déployé**, pas seulement en local :
+
+- la somme nulle sur 900 donnes générées ;
+- l'aller-retour export → base effacée → restauration, photo comprise ;
+- la convergence de deux appareils après un échange croisé, et l'idempotence de la fusion ;
+- le sens du glissement du curseur, par un geste tactile réel ;
+- la rotation du donneur après correction de l'ordre de table ;
+- la mise à jour automatique, en servant une v1 puis une v2 derrière le service worker ;
+- le comportement hors ligne, réseau coupé et page rechargée.

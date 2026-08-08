@@ -13,18 +13,87 @@ C'est une **PWA** : elle s'installe sur l'écran d'accueil d'un iPhone depuis Sa
 entièrement hors ligne, ne collecte rien, n'affiche aucune publicité, et se met à jour chez
 tout le monde à chaque `git push`.
 
+**En ligne : <https://anonjoe.github.io/tarot/>**
+
+---
+
 ## Installer sur un iPhone
 
-1. Ouvrir <https://anonjoe.github.io/tarot/> **dans Safari** (Chrome ne propose pas
-   l'installation sur iOS).
+1. Ouvrir <https://anonjoe.github.io/tarot/> **dans Safari** — Chrome ne propose pas
+   l'installation sur iOS.
 2. Bouton Partager → **Ajouter à l'écran d'accueil**.
-3. C'est tout. L'icône se comporte comme une application : plein écran, hors ligne,
-   parties conservées.
+3. C'est tout. L'icône se comporte comme une application : plein écran, hors ligne, parties
+   conservées.
+
+Les mises à jour arrivent seules : l'application vérifie au retour au premier plan et se
+recharge si une nouvelle version est en ligne.
+
+> **Après une réinstallation**, les parties sont conservées — elles vivent dans le stockage
+> du site, que la suppression de l'icône n'efface pas.
+
+---
+
+## Utiliser
+
+### Une soirée type
+
+1. **Nouvelle partie** — choisir 3, 4 ou 5 joueurs, les prendre dans le carnet, désigner
+   qui donne en premier. L'ordre de sélection fixe l'ordre de la table.
+2. À chaque main jouée, **Nouvelle donne** : le preneur, le contrat, ses bouts, le petit au
+   bout, puis les points de l'attaque au curseur. Les annonces rares (poignée, chelem,
+   misère) sont repliées sous *Autres annonces*.
+3. La donne validée, un écran révèle le résultat puis **qui prend la tête**.
+4. En fin de soirée, **Terminer** : l'épilogue affiche le vainqueur et son avance.
+
+### Les écrans
+
+| Écran | À quoi il sert |
+|---|---|
+| **Accueil** | Reprendre la partie en cours, revoir les parties terminées, accéder aux réglages |
+| **Nouvelle partie** | Composer la table et désigner le premier donneur |
+| **Partie** | Le tableau des donnes, les cumuls, le rang de chacun |
+| **Saisie d'une donne** | Preneur, contrat, bouts, annonces, curseur de points, détail du calcul |
+| **Vachette** | Saisie du contrat maison : les points de chacun, qui doivent totaliser 91 |
+| **Table** | Corriger l'ordre des joueurs en cours de partie et qui donne ensuite |
+| **Statistiques** | Courbes d'évolution, réussite des prises, bilan, attaque contre défense |
+| **Hauts faits** | Onze exploits propres au tarot, décrochés ou à décrocher |
+| **Carnet des joueurs** | Modifier un nom, une photo, un tag ; retirer quelqu'un |
+| **Règles maison** | Tous les barèmes, modifiables sans toucher au code |
+| **Sauvegarde** | Exporter, fusionner avec quelqu'un, ou restaurer |
+
+### Corriger une erreur
+
+- **Une donne mal saisie** — la toucher dans le tableau pour la rouvrir, la corriger ou la
+  supprimer. Les donnes suivantes sont renumérotées.
+- **Un ordre de table faux** — l'entrée **Table**, en haut de l'écran de partie. L'ordre
+  commande la rotation du donneur : s'être trompé en composant la table décale tous les
+  donneurs suivants.
+- **Une partie close par erreur** — la toucher à l'accueil, puis *Rouvrir la partie*.
+
+---
+
+## Synchroniser à deux
+
+Sans serveur, la synchronisation passe par un fichier. Chacun exporte le sien, l'autre le
+fusionne — et l'opération se refait dans l'autre sens pour que les deux aient tout.
+
+1. **Alignez les tags.** Dans le *Carnet des joueurs*, chaque personne porte un tag court
+   de la forme `K7M-2PQ`. Pour que la même personne soit reconnue des deux côtés, recopiez
+   chez l'un le tag que l'autre affiche. Sans cela, elle apparaîtra deux fois.
+2. **Exportez** depuis *Sauvegarde*, et envoyez le fichier `vachette-….json`.
+3. **Fusionnez** le fichier reçu : ce qui manque est ajouté, **rien n'est écrasé**.
+   L'opération est idempotente — fusionner deux fois le même fichier n'ajoute rien.
+
+> **Fusionner ≠ restaurer.** *Restaurer* remplace intégralement le contenu de l'appareil,
+> c'est un retour en arrière. *Fusionner* n'ajoute que ce qui manque.
+
+Les barèmes ne sont pas fusionnés : ce sont des réglages d'appareil, pas de l'historique.
+
+---
 
 ## Règles implémentées
 
-Règles FFT, amendées des conventions de la table. Tout est modifiable dans l'écran
-**Règles maison** sans toucher au code.
+Règles FFT, amendées des conventions de la table. Tout est modifiable dans **Règles maison**.
 
 | | |
 |---|---|
@@ -36,6 +105,18 @@ Règles FFT, amendées des conventions de la table. Tout est modifiable dans l'�
 | Chelem | +400 annoncé réussi · +200 non annoncé · −200 annoncé chuté |
 | Misère | 10 points versés par chaque adversaire (convention, hors FFT) |
 | Répartition à 5 | Preneur 2 parts, appelé 1, défenseurs −1 ; preneur seul → 4 parts |
+
+La formule d'une donne :
+
+```
+écart = points de l'attaque − seuil selon les bouts
+base  = ±(25 + |écart|) + petit au bout
+part  = base × multiplicateur + poignée + chelem
+```
+
+Chaque défenseur perd une part, le preneur en gagne autant qu'il affronte d'adversaires.
+**La somme des scores d'une donne vaut toujours zéro** — un test le vérifie sur 900 donnes
+générées.
 
 ### La vachette
 
@@ -49,73 +130,68 @@ Contrat maison joué quand personne ne prend, au lieu de redistribuer. Chacun po
 En cas d'égalité, les joueurs concernés se partagent la moyenne des rangs qu'ils occupent,
 ce qui préserve la somme nulle.
 
-### À propos des quarts de point
+### Points entiers, cumuls à décimales
 
-La Pousse à ×1,5 appliquée à une assiette en demi-points produit des quarts de point
-(25,5 × 1,5 = 38,25). Ils sont conservés tels quels plutôt qu'arrondis : c'est ce qui
-garantit que la somme des scores d'une donne vaut exactement zéro.
+La saisie se fait en **points entiers**. À quatre joueurs c'est exact : le preneur ramasse
+le chien puis des plis de quatre cartes, soit toujours un compte pair. À trois et à cinq, un
+demi-point peut survenir — la table l'arrondit.
+
+Les **cumuls**, eux, gardent des décimales : la Pousse à ×1,5 sur une assiette entière donne
+des demis, et à trois défenseurs des quarts. Ils sont conservés plutôt qu'arrondis, sans
+quoi la somme d'une donne ne vaudrait plus zéro. Le tableau les affiche en petit corps pour
+rendre sa taille à l'unité.
+
+---
 
 ## Développement
 
 ```sh
 npm install
 npm run dev      # serveur local
-npm test         # moteur de calcul
+npm test         # moteur de calcul et fusion — 89 tests
 npm run build    # production
-node scripts/make-icons.mjs   # régénère les icônes
+node scripts/make-icons.mjs   # régénère les icônes et le favicon
 ```
 
-Le service worker ne s'installe qu'en HTTPS : le comportement hors ligne ne se teste
-réellement qu'une fois déployé.
+Le service worker ne s'installe qu'en HTTPS : **le comportement hors ligne ne se teste
+réellement qu'une fois déployé.**
 
 ### Structure
 
 | | |
 |---|---|
-| `src/engine/` | Calcul des points et hauts faits. TypeScript pur, sans React ni DOM, couvert par 89 tests |
-| `src/store/` | Persistance IndexedDB (joueurs, parties, donnes, barèmes) et export |
-| `src/screens/` | Les dix écrans de l'application |
-| `src/components/` | Portraits, tableau de scores, curseur de points, graphiques SVG |
+| `src/engine/` | Calcul des points, hauts faits, tags. TypeScript pur, sans React ni DOM |
+| `src/store/` | Persistance IndexedDB, sauvegarde, fusion de deux carnets |
+| `src/screens/` | Les onze écrans |
+| `src/components/` | Portraits, tableau, curseur, graphiques SVG, logo |
 | `src/palette.ts` | Identité colorée des joueurs, validée pour le daltonisme |
-
-L'accent de l'interface (corail sur sombre, grenat sur clair) est choisi pour rester à
-distance mesurée de chaque couleur de joueur : une teinte d'interface ne doit jamais se
-lire comme l'identité de quelqu'un à table. Le rouge saturé de la marque, lui, ne sert
-qu'au logo.
+| `src/pwa.ts` | Enregistrement du service worker et recherche de mise à jour |
+| `scripts/make-icons.mjs` | Génère les PNG et le favicon, sans dépendance |
 
 Le moteur est isolé à dessein : c'est la seule partie qui doit être irréprochable, et il
-resterait portable tel quel si une version native voyait le jour. Un test vérifie sur
-900 donnes générées que **la somme des scores d'une donne vaut toujours zéro**.
+resterait portable tel quel si une version native voyait le jour.
 
-### Tags de joueur
+### Déploiement
 
-Un joueur porte un `id` — un UUID tiré localement — et un **tag** court et dictable de la
-forme `K7M-2PQ`. Deux personnes qui saisissent « Joachim » chacune de leur côté obtiennent
-deux UUID différents pour la même personne : le tag est ce qui permet de les reconnaître au
-moment de fusionner deux carnets, et il se modifie depuis le **Carnet des joueurs**.
+Chaque poussée sur `main` déclenche le workflow GitHub Actions : tests, build, mise en ligne
+sur GitHub Pages. **Les tests bloquent le déploiement** — pas de points faux en production.
 
-L'alphabet exclut `I`, `L`, `O` et donc aussi `0` et `1` : un tag se dicte au téléphone.
+L'URL reste `/tarot/` bien que l'application s'appelle Vachette : la renommer casserait
+toutes les installations déjà posées sur un écran d'accueil.
 
-### Hauts faits
-
-Onze exploits propres au tarot — chelem, garde contre tenue, contrat au point près, triple
-poignée, remontada… Ils ne sont **pas stockés** : chacun se recalcule à partir des donnes.
-Corriger une donne saisie de travers retire donc le haut fait qu'elle avait fait décrocher,
-ce qui vaut mieux qu'un tableau de chasse qui mentirait.
-
-## Déploiement
-
-Chaque poussée sur `main` déclenche le workflow GitHub Actions : tests, build, mise en
-ligne sur GitHub Pages. Les tests bloquent le déploiement — pas de points faux en
-production.
+---
 
 ## Ce que l'application ne fait pas
 
-- **Pas de retour haptique** : Safari sur iOS n'implémente pas `navigator.vibrate`.
-- **Pas de synchronisation automatique** entre appareils : sans serveur, elle passe par un
-  fichier. L'écran **Sauvegarde** propose deux gestes distincts — **fusionner** le fichier
-  de quelqu'un d'autre (rien n'est écrasé, l'opération est idempotente), ou **remplacer**
-  entièrement le contenu local par une sauvegarde. Pour synchroniser à deux, chacun exporte
-  et fusionne le fichier de l'autre.
-- **Rien n'est envoyé sur Internet** : le fichier de sauvegarde part là où vous l'envoyez,
-  et nulle part ailleurs.
+- **Pas de retour haptique** — Safari sur iOS n'implémente pas `navigator.vibrate`.
+- **Pas de synchronisation automatique** — sans serveur, elle passe par un fichier échangé
+  à la main.
+- **Rien n'est envoyé sur Internet.** Les photos ne quittent jamais l'appareil, sauf dans un
+  fichier de sauvegarde que vous envoyez vous-même.
+- **Pas de limite au nombre de parties affichées** à l'accueil : la liste s'allonge
+  indéfiniment.
+
+---
+
+Les choix d'implémentation qui méritent une explication sont réunis dans
+[`docs/DECISIONS.md`](docs/DECISIONS.md).
