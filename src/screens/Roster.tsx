@@ -1,8 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { CONTRACT_LABELS, formatPoints, formatSigned } from '../engine/rules'
+import { playerRecord, playerStats } from '../engine/stats'
 import { TAG_HINT, isValidTag, normalizeTag } from '../engine/tag'
+import type { Contract, Deal } from '../engine/types'
 import { Avatar } from '../components/Avatar'
 import { Button, Eyebrow, Screen, Sheet, TopAction } from '../components/ui'
-import { createPlayer, deletePlayer, updatePlayer, type Player } from '../store/db'
+import {
+  createPlayer,
+  deletePlayer,
+  listAllDeals,
+  updatePlayer,
+  type Player,
+} from '../store/db'
 import { usePlayers } from '../store/hooks'
 import { preparePhoto } from '../store/photo'
 import './roster.css'
@@ -22,6 +31,12 @@ export function Roster({ onClose }: RosterProps) {
   const { players, refresh } = usePlayers()
   const [editing, setEditing] = useState<Player | null>(null)
   const [creating, setCreating] = useState(false)
+  // Chargées une fois pour tout le carnet : ouvrir une fiche ne doit pas relire la base.
+  const [deals, setDeals] = useState<Deal[]>([])
+
+  useEffect(() => {
+    listAllDeals().then(setDeals)
+  }, [])
 
   return (
     <Screen
@@ -61,6 +76,7 @@ export function Roster({ onClose }: RosterProps) {
         <PlayerEditor
           player={editing}
           existing={players}
+          deals={deals}
           onDone={async () => {
             setEditing(null)
             setCreating(false)
@@ -80,11 +96,13 @@ export function Roster({ onClose }: RosterProps) {
 function PlayerEditor({
   player,
   existing,
+  deals,
   onDone,
   onCancel,
 }: {
   player: Player | null
   existing: Player[]
+  deals: Deal[]
   onDone: () => void
   onCancel: () => void
 }) {
@@ -194,6 +212,8 @@ function PlayerEditor({
 
       {error && <p className="editor__error">{error}</p>}
 
+      {player && <PlayerFigures player={player} deals={deals} />}
+
       <Button variant="primary" onClick={save} disabled={busy}>
         {player ? 'Enregistrer' : 'Ajouter'}
       </Button>
@@ -206,6 +226,78 @@ function PlayerEditor({
         Annuler
       </Button>
     </Sheet>
+  )
+}
+
+/**
+ * Le bilan d'un joueur, toutes parties confondues.
+ *
+ * Sur sa fiche plutôt que dans l'écran Statistiques : là-bas on compare des joueurs entre
+ * eux, ici on regarde une personne. Ce sont deux questions différentes, et la seconde
+ * n'avait pas de réponse.
+ */
+function PlayerFigures({ player, deals }: { player: Player; deals: Deal[] }) {
+  const { stats, record, favourite } = useMemo(() => {
+    const [stats] = playerStats(deals, [player.id])
+    const record = playerRecord(deals, player.id)
+    const entries = Object.entries(stats.contracts) as [Contract, number][]
+    const best = entries.reduce((a, b) => (b[1] > a[1] ? b : a), entries[0])
+    return { stats, record, favourite: best && best[1] > 0 ? best : null }
+  }, [deals, player.id])
+
+  if (stats.dealsPlayed === 0) {
+    return (
+      <p className="figures__none">
+        Aucune donne à son actif pour l'instant. Son bilan s'écrira tout seul.
+      </p>
+    )
+  }
+
+  return (
+    <>
+      <Eyebrow>Son bilan</Eyebrow>
+      <div className="figures">
+        <Figure value={record.gamesPlayed} label={record.gamesPlayed > 1 ? 'parties' : 'partie'} />
+        <Figure
+          value={record.gamesWon}
+          label={record.gamesWon > 1 ? 'victoires' : 'victoire'}
+        />
+        <Figure value={stats.dealsPlayed} label="donnes" />
+        <Figure value={formatSigned(stats.total)} label="points" />
+        <Figure value={stats.takes} label={stats.takes > 1 ? 'prises' : 'prise'} />
+        <Figure
+          // Un taux sans prise ne veut rien dire : mieux vaut l'avouer qu'afficher 0 %.
+          value={stats.takes > 0 ? `${Math.round((stats.takesWon / stats.takes) * 100)} %` : '—'}
+          label="réussies"
+        />
+      </div>
+      <p className="figures__note">
+        <strong className="num">{formatSigned(stats.averageAttack)}</strong> par donne en
+        attaque, <strong className="num">{formatSigned(stats.averageDefense)}</strong> en
+        défense.
+        {record.bestGame !== null && (
+          <>
+            {' '}
+            Meilleure partie : <strong className="num">{formatPoints(record.bestGame)}</strong>.
+          </>
+        )}
+        {favourite && (
+          <>
+            {' '}
+            Contrat de prédilection : <strong>{CONTRACT_LABELS[favourite[0]]}</strong>.
+          </>
+        )}
+      </p>
+    </>
+  )
+}
+
+function Figure({ value, label }: { value: number | string; label: string }) {
+  return (
+    <div className="figures__cell">
+      <span className="figures__value num display">{value}</span>
+      <span className="figures__label">{label}</span>
+    </div>
   )
 }
 

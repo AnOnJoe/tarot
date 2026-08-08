@@ -60,7 +60,7 @@ recharge si une nouvelle version est en ligne.
 | **Table** | Corriger l'ordre des joueurs en cours de partie et qui donne ensuite |
 | **Statistiques** | Courbes d'évolution, réussite des prises, bilan, attaque contre défense |
 | **Hauts faits** | Onze exploits propres au tarot, décrochés ou à décrocher |
-| **Carnet des joueurs** | Modifier un nom, une photo, un tag ; retirer quelqu'un |
+| **Carnet des joueurs** | Modifier un nom, une photo, un tag ; **le bilan de chacun** ; retirer quelqu'un |
 | **Règles maison** | Tous les barèmes, modifiables sans toucher au code |
 | **Sauvegarde** | Exporter, fusionner avec quelqu'un, ou restaurer — avec la date de la dernière sauvegarde |
 
@@ -100,6 +100,19 @@ fusionne — et l'opération se refait dans l'autre sens pour que les deux aient
 > c'est un retour en arrière. *Fusionner* n'ajoute que ce qui manque.
 
 Les barèmes ne sont pas fusionnés : ce sont des réglages d'appareil, pas de l'historique.
+
+---
+
+## Le bilan d'un joueur
+
+Sa fiche, dans le *Carnet des joueurs*, porte ce qu'il a fait depuis toujours : parties
+jouées et gagnées, donnes, points cumulés, prises et taux de réussite, moyennes en attaque
+et en défense, meilleure partie, contrat de prédilection.
+
+Une **victoire** compte pour chacun des ex æquo : départager arbitrairement serait pire que
+d'admettre le partage. Une partie ouverte sans y jouer une seule donne ne compte pas.
+
+C'est une autre question que l'écran *Statistiques*, qui compare les joueurs entre eux.
 
 ---
 
@@ -160,7 +173,7 @@ rendre sa taille à l'unité.
 ```sh
 npm install
 npm run dev      # serveur local
-npm test         # moteur de calcul et fusion — 96 tests
+npm test         # moteur de calcul et fusion — 102 tests
 npm run build    # production
 node scripts/make-icons.mjs   # régénère les icônes et le favicon
 ```

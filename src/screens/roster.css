@@ -46,3 +46,56 @@
   line-height: 1.45;
   color: var(--neg);
 }
+
+/*
+ * Bilan d'un joueur sur sa fiche. Trois colonnes : la ligne se lit d'un coup d'œil, et
+ * six chiffres tiennent sans que la fiche déborde de l'écran.
+ */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px 10px;
+  margin-top: 10px;
+  padding: 16px 12px;
+  border-radius: var(--r-card);
+  background: var(--surface-2);
+}
+
+.figures__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.figures__value {
+  font-size: 21px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+}
+
+.figures__label {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.figures__note {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.figures__note strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.figures__none {
+  margin-top: 20px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}

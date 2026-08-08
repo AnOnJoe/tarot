@@ -182,6 +182,18 @@ pas être. **La distinction est portée par les types**, pas par une convention.
 camps. Le modèle « territoire » — pousser la ligne dans le camp adverse — était cohérent
 mais contre-intuitif : on glisse à droite pour faire monter un score.
 
+**Le bilan d'un joueur vit sur sa fiche, pas dans l'écran Statistiques.** Ce sont deux
+questions distinctes : là-bas on compare des joueurs entre eux, ici on regarde une personne.
+La seconde n'avait pas de réponse.
+
+Deux conventions y sont assumées plutôt que contournées : une **victoire compte pour chacun
+des ex æquo** — départager arbitrairement serait pire que d'admettre le partage — et une
+partie ouverte sans y jouer une donne **ne compte pas**, elle n'a pas eu lieu. Un taux de
+réussite sans prise s'affiche `—` et non `0 %` : l'absence de donnée n'est pas un zéro.
+
+La feuille surgissante est désormais **plafonnée et défilante** (`88dvh`) : une fiche porte
+assez de contenu pour que ses boutons passent sous le bord d'un petit iPhone.
+
 **Supprimer une partie se glisse, et se trouve aussi sans le geste.** Le glissement vers la
 gauche est celui des listes iOS, donc appris d'avance — mais un geste ne s'annonce pas : la
 feuille de choix d'une partie terminée porte la même action, pour qui ne le connaît pas. La

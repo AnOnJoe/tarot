@@ -428,8 +428,13 @@ input {
   animation: sheetFade 200ms ease;
 }
 
+/* Plafonnée et défilante : une fiche de joueur porte désormais son bilan, et sur un petit
+   iPhone les boutons du bas passeraient sous le bord de l'écran. */
 .sheet__panel {
   width: 100%;
+  max-height: 88dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 22px var(--pad) calc(env(safe-area-inset-bottom) + 18px);
   border-radius: 26px 26px 0 0;
   background: var(--surface);

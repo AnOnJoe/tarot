@@ -93,6 +93,56 @@ export function playerStats(deals: Deal[], playerIds: PlayerId[]): PlayerStats[]
   })
 }
 
+/** Le palmarès d'un joueur, partie par partie plutôt que donne par donne. */
+export interface PlayerRecord {
+  gamesPlayed: number
+  /**
+   * Parties terminées en tête, **égalités comprises** : à deux ex æquo, les deux comptent
+   * une victoire. Départager arbitrairement serait pire que d'admettre le partage.
+   */
+  gamesWon: number
+  /** Meilleur total sur une partie, ou `null` si le joueur n'en a jamais fini une. */
+  bestGame: number | null
+}
+
+/**
+ * Dépouille les donnes partie par partie pour un seul joueur.
+ *
+ * Une partie sans donne ne compte pas : elle a été ouverte, jamais jouée, et la faire
+ * figurer au palmarès reviendrait à compter une soirée qui n'a pas eu lieu.
+ */
+export function playerRecord(deals: Deal[], playerId: PlayerId): PlayerRecord {
+  const byGame = new Map<string, Deal[]>()
+  for (const deal of deals) {
+    const group = byGame.get(deal.gameId)
+    if (group) group.push(deal)
+    else byGame.set(deal.gameId, [deal])
+  }
+
+  let gamesPlayed = 0
+  let gamesWon = 0
+  let bestGame: number | null = null
+
+  for (const group of byGame.values()) {
+    const totals = new Map<PlayerId, number>()
+    let present = false
+    for (const deal of group) {
+      for (const [id, score] of Object.entries(deal.scores)) {
+        totals.set(id, (totals.get(id) ?? 0) + score)
+      }
+      if (deal.scores[playerId] !== undefined) present = true
+    }
+    if (!present) continue
+
+    gamesPlayed++
+    const mine = totals.get(playerId) ?? 0
+    if (bestGame === null || mine > bestGame) bestGame = mine
+    if (mine === Math.max(...totals.values())) gamesWon++
+  }
+
+  return { gamesPlayed, gamesWon, bestGame }
+}
+
 /** Compte les faits marquants de l'ensemble des donnes. */
 export function dealStats(deals: Deal[]): DealStats {
   const stats: DealStats = {
