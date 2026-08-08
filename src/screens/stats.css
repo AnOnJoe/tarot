@@ -1,0 +1,85 @@
+/* Épilogue de partie : le seul endroit de l'application qui s'autorise un peu d'apparat. */
+.winner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 18px;
+  padding: 26px 20px 24px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Halo derrière le portrait, cantonné à la carte. */
+.winner::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  width: 240px;
+  height: 240px;
+  margin-left: -120px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 22%, transparent),
+    transparent 68%
+  );
+  pointer-events: none;
+  animation: winnerGlow 620ms cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.winner > * {
+  position: relative;
+}
+
+.winner .avatar {
+  margin: 8px 0 6px;
+  animation: winnerPop 520ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+.winner__label {
+  font-size: 11px;
+  font-weight: 640;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.winner__name {
+  font-size: 20px;
+  font-weight: 680;
+  letter-spacing: -0.03em;
+}
+
+.winner__score {
+  font-size: 40px;
+  color: var(--accent);
+  line-height: 1.05;
+}
+
+.winner__lead {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.winner__lead strong {
+  color: var(--ink);
+  font-weight: 660;
+}
+
+@keyframes winnerPop {
+  from {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+}
+
+@keyframes winnerGlow {
+  from {
+    opacity: 0;
+  }
+}

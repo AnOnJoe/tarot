@@ -2,6 +2,7 @@ import { formatPoints, formatSigned } from '../engine/rules'
 import type { Deal, PlayerId } from '../engine/types'
 import type { Player } from '../store/db'
 import { Avatar } from './Avatar'
+import { useAnimatedNumber } from './useAnimatedNumber'
 import './scoretable.css'
 
 /** Abréviations tenant dans la gouttière du tableau. */
@@ -51,38 +52,26 @@ export function ScoreTable({
     <div className="table">
       <div className="table__players" style={{ gridTemplateColumns: columns }}>
         <span />
-        {players.map((player) => {
-          const total = totals[player.id] ?? 0
-          const isDealer = player.id === nextDealerId
-          return (
-            <button
-              key={player.id}
-              type="button"
-              className="tile-btn table__tile"
-              data-dealer={isDealer || undefined}
-              onClick={() => onTake(player.id)}
-            >
-              {isDealer && <span className="table__badge">donne</span>}
-              <Avatar player={player} size={34} />
-              <span className="table__name">{player.name}</span>
-              <span
-                className="table__total num display"
-                style={{ fontSize: totalSize }}
-              >
-                {formatPoints(total)}
-              </span>
-              <span className="sr-only">{player.name} prend</span>
-            </button>
-          )
-        })}
+        {players.map((player) => (
+          <PlayerTile
+            key={player.id}
+            player={player}
+            total={totals[player.id] ?? 0}
+            isDealer={player.id === nextDealerId}
+            totalSize={totalSize}
+            onTake={() => onTake(player.id)}
+          />
+        ))}
       </div>
 
       <div className="table__body">
-        {deals.map((deal) => (
+        {deals.map((deal, index) => (
           <button
             key={deal.id}
             type="button"
+            // La dernière ligne apparaît en fondu : on voit la donne rejoindre le tableau.
             className="table__row"
+            data-latest={index === deals.length - 1 || undefined}
             style={{ gridTemplateColumns: columns }}
             onClick={() => onOpenDeal(deal)}
           >
@@ -110,5 +99,42 @@ export function ScoreTable({
         ))}
       </div>
     </div>
+  )
+}
+
+/**
+ * Tuile d'un joueur. Le cumul défile jusqu'à sa nouvelle valeur après chaque donne :
+ * on voit d'un coup d'œil qui a bougé, et dans quel sens.
+ */
+function PlayerTile({
+  player,
+  total,
+  isDealer,
+  totalSize,
+  onTake,
+}: {
+  player: Player
+  total: number
+  isDealer: boolean
+  totalSize: number
+  onTake: () => void
+}) {
+  const shown = useAnimatedNumber(total)
+
+  return (
+    <button
+      type="button"
+      className="tile-btn table__tile"
+      data-dealer={isDealer || undefined}
+      onClick={onTake}
+    >
+      {isDealer && <span className="table__badge">donne</span>}
+      <Avatar player={player} size={34} />
+      <span className="table__name">{player.name}</span>
+      <span className="table__total num display" style={{ fontSize: totalSize }}>
+        {formatPoints(shown)}
+      </span>
+      <span className="sr-only">{player.name} prend</span>
+    </button>
   )
 }

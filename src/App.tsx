@@ -19,7 +19,7 @@ type View =
   | { name: 'nouvelle' }
   | { name: 'partie'; game: GameRecord }
   /** `back` distingue le retour au tableau du retour à l'accueil après une partie close. */
-  | { name: 'stats'; game?: GameRecord; back: 'accueil' | 'partie' }
+  | { name: 'stats'; game?: GameRecord; back: 'accueil' | 'partie'; celebrate?: boolean }
   | { name: 'regles' }
 
 export function App() {
@@ -58,7 +58,7 @@ export function App() {
           onOpenStats={() => setView({ name: 'stats', game: view.game, back: 'partie' })}
           onEnd={async () => {
             await endGame(view.game.id)
-            setView({ name: 'stats', game: view.game, back: 'accueil' })
+            setView({ name: 'stats', game: view.game, back: 'accueil', celebrate: true })
           }}
         />
       )
@@ -67,6 +67,7 @@ export function App() {
       return (
         <Stats
           game={view.game}
+          celebrate={view.celebrate}
           onClose={() =>
             setView(
               view.back === 'partie' && view.game

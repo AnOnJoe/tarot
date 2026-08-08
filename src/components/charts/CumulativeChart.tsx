@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { formatPoints } from '../../engine/rules'
-import { cumulativeSeries } from '../../engine/score'
+import { cumulative, cumulativeSeries } from '../../engine/score'
 import type { Deal, PlayerId } from '../../engine/types'
 import { seriesColor } from '../../palette'
 import type { Player } from '../../store/db'
@@ -15,6 +15,13 @@ const MAX_LABEL = 7
 interface CumulativeChartProps {
   players: Player[]
   deals: Deal[]
+  /**
+   * Découpage de l'axe. Sans découpage, un point par donne (une partie). Avec, un point
+   * par groupe : c'est ainsi qu'on suit l'évolution d'une partie à l'autre.
+   */
+  groups?: { label: string; deals: Deal[] }[]
+  caption?: string
+  unitLabel?: string
 }
 
 /**
@@ -24,16 +31,33 @@ interface CumulativeChartProps {
  * jamais sur la seule couleur. Un appui sur le tracé fait apparaître le curseur de lecture
  * avec les scores de la donne pointée.
  */
-export function CumulativeChart({ players, deals }: CumulativeChartProps) {
+export function CumulativeChart({
+  players,
+  deals,
+  groups,
+  caption = 'Cumul au fil des donnes',
+  unitLabel = 'donne',
+}: CumulativeChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [cursor, setCursor] = useState<number | null>(null)
 
-  if (deals.length === 0) return null
-
   const playerIds = players.map((p) => p.id)
-  // On part de zéro : la ligne démarre avant la première donne, à la marque du départ.
-  const series = [{} as Record<PlayerId, number>, ...cumulativeSeries(deals, playerIds)]
-  series[0] = Object.fromEntries(playerIds.map((id) => [id, 0]))
+
+  // Un point par groupe quand il y en a (une partie), sinon un point par donne.
+  const steps = groups
+    ? groups.map((group) => cumulative(group.deals, playerIds))
+    : deals.map((deal) => deal.scores)
+
+  if (steps.length === 0) return null
+
+  // On part de zéro : la ligne démarre avant le premier point, à la marque du départ.
+  const series = [
+    Object.fromEntries(playerIds.map((id) => [id, 0])) as Record<PlayerId, number>,
+    ...cumulativeSeries(
+      steps.map((scores) => ({ scores })),
+      playerIds,
+    ),
+  ]
 
   const values = series.flatMap((point) => playerIds.map((id) => point[id] ?? 0))
   const min = Math.min(0, ...values)
@@ -59,13 +83,30 @@ export function CumulativeChart({ players, deals }: CumulativeChartProps) {
   const zeroY = y(0)
   const active = cursor === null ? null : series[cursor]
 
+  /*
+   * Deux joueurs au coude à coude finissent avec des libellés superposés. On les écarte
+   * verticalement du minimum nécessaire, en partant du haut : la ligne reste à sa place,
+   * seul son étiquette glisse.
+   */
+  const last = series[series.length - 1]
+  const labels = players
+    .map((player) => ({ player, value: last[player.id] ?? 0, y: y(last[player.id] ?? 0) }))
+    .sort((a, b) => a.y - b.y)
+  const MIN_GAP = 11
+  for (let i = 1; i < labels.length; i++) {
+    const overlap = labels[i - 1].y + MIN_GAP - labels[i].y
+    if (overlap > 0) labels[i].y += overlap
+  }
+
   return (
     <figure className="chart">
       <figcaption className="chart__caption">
-        Cumul au fil des donnes
+        {caption}
         {active && cursor !== null && (
           <span className="chart__readout num">
-            {cursor === 0 ? 'départ' : `donne ${cursor}`}
+            {cursor === 0
+              ? 'départ'
+              : (groups?.[cursor - 1]?.label ?? `${unitLabel} ${cursor}`)}
           </span>
         )}
       </figcaption>
@@ -113,7 +154,6 @@ export function CumulativeChart({ players, deals }: CumulativeChartProps) {
           const path = series
             .map((point, index) => `${index === 0 ? 'M' : 'L'}${x(index)} ${y(point[player.id] ?? 0)}`)
             .join(' ')
-          const last = series[series.length - 1][player.id] ?? 0
           return (
             <g key={player.id}>
               <path d={path} className="chart__line" stroke={seriesColor(player.colorIndex)} />
@@ -126,20 +166,24 @@ export function CumulativeChart({ players, deals }: CumulativeChartProps) {
                   className="chart__dot"
                 />
               )}
-              {/* Libellé direct en bout de ligne : l'identité ne tient pas à la couleur seule. */}
-              <text
-                x={W - PAD.right + 5}
-                y={y(last) + 3}
-                className="chart__endLabel"
-                fill={seriesColor(player.colorIndex)}
-              >
-                {player.name.length > MAX_LABEL
-                  ? `${player.name.slice(0, MAX_LABEL - 1)}…`
-                  : player.name}
-              </text>
             </g>
           )
         })}
+
+        {/* Libellés directs en bout de ligne : l'identité ne tient pas à la couleur seule. */}
+        {labels.map(({ player, y: labelY }) => (
+          <text
+            key={player.id}
+            x={W - PAD.right + 5}
+            y={labelY + 3}
+            className="chart__endLabel"
+            fill={seriesColor(player.colorIndex)}
+          >
+            {player.name.length > MAX_LABEL
+              ? `${player.name.slice(0, MAX_LABEL - 1)}…`
+              : player.name}
+          </text>
+        ))}
       </svg>
 
       {active && (

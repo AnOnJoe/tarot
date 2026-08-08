@@ -83,6 +83,18 @@
   border-top: 1px solid var(--line);
 }
 
+/* La donne qui vient d'être validée se pose dans le tableau plutôt que d'y surgir. */
+.table__row[data-latest] {
+  animation: rowIn 340ms cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
 .table__row:active {
   background: var(--surface);
 }
