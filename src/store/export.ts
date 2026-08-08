@@ -9,7 +9,15 @@ import {
   type Backup,
   type BackupSummary,
 } from './backup'
-import { listAllDeals, listGames, listPlayers, loadRules, readAll, replaceAll } from './db'
+import {
+  listAllDeals,
+  listGames,
+  listPlayers,
+  loadRules,
+  markBackedUp,
+  readAll,
+  replaceAll,
+} from './db'
 import { mergeDatasets, type MergeSummary } from './merge'
 
 /**
@@ -65,8 +73,11 @@ function toCsv(deals: Deal[], names: Map<string, string>): string {
  *
  * La feuille de partage iOS n'accepte des fichiers que si le navigateur le permet ; à
  * défaut on retombe sur un téléchargement, qui atterrit dans l'app Fichiers.
+ *
+ * Rend `false` si l'utilisateur a renoncé : un partage annulé n'est pas une sauvegarde, et
+ * le rappel de l'accueil ne doit pas s'éteindre pour rien.
  */
-export async function exportEverything(): Promise<void> {
+export async function exportEverything(): Promise<boolean> {
   const data = await buildBackup()
   const names = new Map(data.players.map((p) => [p.id, p.name]))
   const stamp = data.exportedAt.slice(0, 10)
@@ -79,10 +90,11 @@ export async function exportEverything(): Promise<void> {
   if (navigator.canShare?.({ files })) {
     try {
       await navigator.share({ files, title: 'Sauvegarde Tarot' })
-      return
+      await markBackedUp()
+      return true
     } catch (error) {
       // Partage refusé ou annulé : on bascule sur le téléchargement.
-      if ((error as DOMException)?.name === 'AbortError') return
+      if ((error as DOMException)?.name === 'AbortError') return false
     }
   }
 
@@ -94,6 +106,8 @@ export async function exportEverything(): Promise<void> {
     link.click()
     URL.revokeObjectURL(url)
   }
+  await markBackedUp()
+  return true
 }
 
 /**
@@ -113,6 +127,9 @@ export async function importBackup(file: File): Promise<BackupSummary> {
     deals: backup.deals,
     rules: backup.rules,
   })
+  // L'appareil est désormais la copie conforme d'un fichier qui existe : c'est bien une
+  // sauvegarde, et le rappel de l'accueil n'a plus lieu d'être.
+  await markBackedUp()
   return summarize(backup)
 }
 

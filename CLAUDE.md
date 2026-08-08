@@ -12,7 +12,7 @@ Lire [`README.md`](README.md) pour l'usage et les règles,
 ## Commandes
 
 ```sh
-npm test                      # 89 tests — moteur, hauts faits, tags, fusion, sauvegarde
+npm test                      # 96 tests — moteur, hauts faits, tags, tours, fusion, sauvegarde
 npx tsc -b tsconfig.json --noEmit
 npm run build
 npm run dev

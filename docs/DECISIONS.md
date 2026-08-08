@@ -190,6 +190,27 @@ laisse le reste de l'écran défiler.
 fixée à l'avance. C'est la longueur qui contraint, pas le nombre de joueurs : à quatre,
 `150` tient en 35 px là où `−422,25` plafonne à 15.
 
+**Le compte des tours de donne est tenu par l'application**, pas par la table. Une soirée
+se termine proprement quand chacun a donné le même nombre de fois ; s'arrêter au milieu
+d'un tour avantage ceux qui ont donné une fois de plus. C'est une convention de table, donc
+elle est **signalée et non imposée** : *Terminer* prévient qu'il reste des donnes, et clôt
+quand même si on le confirme.
+
+Le calcul vit dans `src/engine/rounds.ts` plutôt que dans l'écran : c'est de l'arithmétique
+de partie, et l'invariant qui compte — le reste annoncé solde toujours le tour — se teste
+sans navigateur.
+
+**Le rappel de sauvegarde s'éteint tout seul, et ne se congédie pas.** C'est le seul vrai
+risque du projet : tout l'historique tient dans le stockage d'un navigateur, sur un
+téléphone, et aucun serveur ne le rattraperait. Le rappel n'apparaît qu'au-delà de trois
+parties terminées sans sauvegarde — assez haut pour ne pas harceler après une soirée — et
+disparaît dès qu'un fichier est sorti.
+
+Un partage annulé n'est pas une sauvegarde : `exportEverything` rend `false` sur
+`AbortError`, et la date n'est posée qu'en cas de sortie effective. Une **restauration** la
+pose aussi : l'appareil est alors la copie conforme d'un fichier qui existe. Une **fusion**
+non — son résultat n'existe nulle part sous forme de fichier.
+
 **L'accueil ne montre que trois parties**, celle en cours comprise — elle occupe l'une des
 trois places, car elle en est une pour qui regarde l'écran, même si elle a sa propre carte.
 Le reste tient derrière *Voir les N parties*, et les réglages derrière *Paramètres* : on

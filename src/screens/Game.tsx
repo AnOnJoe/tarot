@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { dealHighlights } from '../engine/achievements'
+import { roundProgress } from '../engine/rounds'
 import { contractBreakdown, scoreDeal } from '../engine/score'
 import type { Deal, DealInput, PlayerId, RuleSet } from '../engine/types'
 import { DealReveal, type RevealData } from '../components/DealReveal'
@@ -96,6 +97,26 @@ export function Game({
     else setMode({ view: 'contrat', deal: deal.input, editing: deal })
   }
 
+  const progress = roundProgress(state.deals.length, game.playerIds.length)
+
+  /**
+   * S'arrêter au milieu d'un tour avantage ceux qui ont donné une fois de plus : on le dit
+   * avant de clore, sans l'interdire — c'est une convention de table, pas une règle.
+   */
+  const end = () => {
+    if (progress.remaining > 0 && state.deals.length > 0) {
+      const donnes = `${progress.remaining} donne${progress.remaining > 1 ? 's' : ''}`
+      if (
+        !confirm(
+          `Il reste ${donnes} pour que chacun ait donné autant de fois. Terminer quand même ?`,
+        )
+      ) {
+        return
+      }
+    }
+    onEnd()
+  }
+
   if (state.loading) return <Screen title="Partie">{null}</Screen>
 
   if (mode.view === 'contrat') {
@@ -168,12 +189,28 @@ export function Game({
           >
             Nouvelle donne
           </Button>
-          <Button variant="ghost" onClick={onEnd}>
+          <Button variant="ghost" onClick={end}>
             Terminer
           </Button>
         </>
       }
     >
+      {state.deals.length > 0 && (
+        <p className="game__round">
+          {progress.remaining === 0 ? (
+            <>
+              <strong>Tour {progress.completed} bouclé</strong> · chacun a donné{' '}
+              {progress.completed === 1 ? 'une fois' : `${progress.completed} fois`}
+            </>
+          ) : (
+            <>
+              <strong>Tour {progress.round}</strong> · encore {progress.remaining} donne
+              {progress.remaining > 1 ? 's' : ''} pour que chacun ait donné autant
+            </>
+          )}
+        </p>
+      )}
+
       <ScoreTable
         players={state.players}
         deals={state.deals}

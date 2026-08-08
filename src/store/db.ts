@@ -322,6 +322,24 @@ export async function listAllDeals(): Promise<Deal[]> {
   return (await db()).getAll('deals')
 }
 
+/* -------------------------------------------------------------- sauvegarde */
+
+/**
+ * Date du dernier moment où le contenu de l'appareil a coïncidé avec un fichier — export
+ * réussi ou restauration.
+ *
+ * Tout l'historique tient dans le stockage d'un seul navigateur, sur un seul téléphone :
+ * perdu, réinitialisé ou remplacé, il n'en reste rien. Cette date sert à le rappeler.
+ */
+export async function markBackedUp(): Promise<void> {
+  await (await db()).put('settings', Date.now(), 'lastBackupAt')
+}
+
+export async function getLastBackupAt(): Promise<number | null> {
+  const value = await (await db()).get('settings', 'lastBackupAt')
+  return typeof value === 'number' ? value : null
+}
+
 /* ------------------------------------------------------------------- règles */
 
 export async function loadRules(): Promise<RuleSet> {

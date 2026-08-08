@@ -62,3 +62,25 @@
 .list__grow .list__meta {
   display: block;
 }
+
+/* Rappel de sauvegarde. Il avertit sans alarmer : ce n'est pas une erreur, c'est une
+   précaution — d'où la surface neutre plutôt que la teinte de danger. */
+.notice {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.notice__text {
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.notice__text strong {
+  color: var(--ink);
+  font-weight: 600;
+}

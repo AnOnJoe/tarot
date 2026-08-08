@@ -43,7 +43,10 @@ recharge si une nouvelle version est en ligne.
    bout, puis les points de l'attaque au curseur. Les annonces rares (poignée, chelem,
    misère) sont repliées sous *Autres annonces*.
 3. La donne validée, un écran révèle le résultat puis **qui prend la tête**.
-4. En fin de soirée, **Terminer** : l'épilogue affiche le vainqueur et son avance.
+4. Au-dessus du tableau, le **tour de donne** : « encore 2 donnes pour que chacun ait donné
+   autant ». S'arrêter au milieu d'un tour avantage ceux qui ont donné une fois de plus.
+5. En fin de soirée, **Terminer** : l'épilogue affiche le vainqueur et son avance. Si le
+   tour n'est pas bouclé, l'application le signale — sans l'interdire.
 
 ### Les écrans
 
@@ -59,7 +62,7 @@ recharge si une nouvelle version est en ligne.
 | **Hauts faits** | Onze exploits propres au tarot, décrochés ou à décrocher |
 | **Carnet des joueurs** | Modifier un nom, une photo, un tag ; retirer quelqu'un |
 | **Règles maison** | Tous les barèmes, modifiables sans toucher au code |
-| **Sauvegarde** | Exporter, fusionner avec quelqu'un, ou restaurer |
+| **Sauvegarde** | Exporter, fusionner avec quelqu'un, ou restaurer — avec la date de la dernière sauvegarde |
 
 ### Corriger une erreur
 
@@ -76,6 +79,10 @@ recharge si une nouvelle version est en ligne.
 
 Sans serveur, la synchronisation passe par un fichier. Chacun exporte le sien, l'autre le
 fusionne — et l'opération se refait dans l'autre sens pour que les deux aient tout.
+
+> **Exportez régulièrement.** Tout l'historique tient dans le stockage d'un navigateur, sur
+> un téléphone : perdu, réinitialisé ou remplacé, il n'en resterait rien. L'accueil le
+> rappelle au bout de trois parties terminées sans sauvegarde.
 
 1. **Alignez les tags.** Dans le *Carnet des joueurs*, chaque personne porte un tag court
    de la forme `K7M-2PQ`. Pour que la même personne soit reconnue des deux côtés, recopiez
@@ -148,7 +155,7 @@ rendre sa taille à l'unité.
 ```sh
 npm install
 npm run dev      # serveur local
-npm test         # moteur de calcul et fusion — 89 tests
+npm test         # moteur de calcul et fusion — 96 tests
 npm run build    # production
 node scripts/make-icons.mjs   # régénère les icônes et le favicon
 ```
@@ -160,7 +167,7 @@ réellement qu'une fois déployé.**
 
 | | |
 |---|---|
-| `src/engine/` | Calcul des points, hauts faits, tags. TypeScript pur, sans React ni DOM |
+| `src/engine/` | Calcul des points, hauts faits, tags, tours de donne. TypeScript pur, sans React ni DOM |
 | `src/store/` | Persistance IndexedDB, sauvegarde, fusion de deux carnets |
 | `src/screens/` | Les onze écrans |
 | `src/components/` | Portraits, tableau, curseur, graphiques SVG, logo |

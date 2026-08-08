@@ -8,6 +8,7 @@ import {
   type Game,
   type Player,
   deleteGame,
+  getLastBackupAt,
   getPlayers,
   listDeals,
   listGames,
@@ -66,6 +67,14 @@ const SHORT_FORMAT = new Intl.DateTimeFormat('fr-FR', {
  */
 const RECENT = 3
 
+/**
+ * Parties terminées depuis la dernière sauvegarde au-delà desquelles on le rappelle.
+ *
+ * Assez haut pour ne pas harceler après une soirée, assez bas pour qu'une saison de jeu ne
+ * repose jamais sur le seul stockage d'un téléphone.
+ */
+const BACKUP_NAG = 3
+
 export function Home({
   onResume,
   onOpenGameStats,
@@ -82,9 +91,15 @@ export function Home({
   /** Partie close sur laquelle on vient d'appuyer, en attente d'un choix. */
   const [chosen, setChosen] = useState<GameSummary | null>(null)
   const [showAll, setShowAll] = useState(false)
+  /** Parties terminées qui n'existent dans aucun fichier de sauvegarde. */
+  const [unsaved, setUnsaved] = useState(0)
 
   const load = async () => {
-    const games = await listGames()
+    const [games, lastBackupAt] = await Promise.all([listGames(), getLastBackupAt()])
+    setUnsaved(
+      games.filter((game) => game.endedAt !== null && game.endedAt > (lastBackupAt ?? 0))
+        .length,
+    )
     const built = await Promise.all(
       games.map(async (game) => {
         const [players, deals] = await Promise.all([
@@ -253,6 +268,20 @@ export function Home({
             Annuler
           </Button>
         </Sheet>
+      )}
+
+      {/* Le seul vrai risque du projet : tout tient dans le stockage d'un navigateur, sur
+          un téléphone. Le rappel s'éteint de lui-même dès qu'un fichier est sorti. */}
+      {unsaved >= BACKUP_NAG && (
+        <div className="notice">
+          <p className="notice__text">
+            <strong>
+              {unsaved} parties ne sont sauvegardées que sur ce téléphone.
+            </strong>{' '}
+            Perdu ou réinitialisé, il n'en resterait rien.
+          </p>
+          <Button onClick={onOpenBackup}>Exporter une sauvegarde</Button>
+        </div>
       )}
 
       {/* Replié : on ouvre l'application pour jouer, pas pour régler quelque chose. */}

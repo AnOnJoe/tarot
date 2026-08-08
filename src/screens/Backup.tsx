@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button, Eyebrow, Screen, TopAction } from '../components/ui'
 import type { BackupSummary } from '../store/backup'
 import type { MergeSummary } from '../store/merge'
-import { listAllDeals, listGames, listPlayers } from '../store/db'
+import { getLastBackupAt, listAllDeals, listGames, listPlayers } from '../store/db'
 import { exportEverything, importBackup, mergeBackup } from '../store/export'
 import './backup.css'
 
@@ -29,6 +29,7 @@ export function Backup({ onClose, onRestored }: BackupProps) {
   const [restored, setRestored] = useState<BackupSummary | null>(null)
   const [merged, setMerged] = useState<MergeSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [lastBackup, setLastBackup] = useState<number | null>(null)
 
   useEffect(() => {
     Promise.all([listPlayers(), listGames(), listAllDeals()]).then(
@@ -41,7 +42,12 @@ export function Backup({ onClose, onRestored }: BackupProps) {
         })
       },
     )
+    getLastBackupAt().then(setLastBackup)
   }, [])
+
+  const exportAll = async () => {
+    if (await exportEverything()) setLastBackup(await getLastBackupAt())
+  }
 
   /**
    * Fusion : on ajoute ce qui manque, sans rien remplacer. Aucune confirmation à
@@ -92,6 +98,7 @@ export function Backup({ onClose, onRestored }: BackupProps) {
     try {
       const summary = await importBackup(file)
       setRestored(summary)
+      setLastBackup(await getLastBackupAt())
       // Les compteurs décrivent l'appareil : ils doivent refléter ce qui vient d'y entrer.
       setCounts({
         players: summary.players,
@@ -124,10 +131,15 @@ export function Backup({ onClose, onRestored }: BackupProps) {
         lisible dans un tableur, pour consulter.
       </p>
       <div className="backup__action">
-        <Button variant="primary" onClick={exportEverything}>
+        <Button variant="primary" onClick={exportAll}>
           Exporter la sauvegarde
         </Button>
       </div>
+      <p className="hint">
+        {lastBackup
+          ? `Dernière sauvegarde le ${DATE_FORMAT.format(lastBackup)}.`
+          : "Cet appareil n'a jamais été sauvegardé."}
+      </p>
 
       <Eyebrow>Synchroniser avec quelqu'un</Eyebrow>
       <p className="backup__note">
