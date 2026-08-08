@@ -165,7 +165,7 @@ export function DealSplitChart({ stats }: { stats: DealStats }) {
 function Tile({ value, label }: { value: number; label: string }) {
   return (
     <div className="tile">
-      <span className="tile__value num serif">{formatPoints(value)}</span>
+      <span className="tile__value num display">{formatPoints(value)}</span>
       <span className="tile__label">{label}</span>
     </div>
   )

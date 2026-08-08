@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border: 1px solid var(--line);
+
   border-radius: var(--r-card);
   overflow: hidden;
 }
@@ -41,7 +41,7 @@
 .rules__input {
   width: 74px;
   padding: 7px 10px;
-  border: 1px solid var(--line);
+
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--ink);
@@ -69,7 +69,7 @@
 }
 
 .rules__toggle[aria-checked="true"] {
-  background: var(--gold);
+  background: var(--accent);
 }
 
 .rules__knob {

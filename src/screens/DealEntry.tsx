@@ -40,6 +40,8 @@ interface DealEntryProps {
   onCancel: () => void
   onSubmit: (deal: ContractDeal) => void
   onDelete?: () => void
+  /** Bascule vers la vachette, proposée comme un contrat de la même rangée. */
+  onSwitchToVachette?: () => void
 }
 
 /** Brouillon d'une donne, prêt à être édité, avec le preneur déjà désigné. */
@@ -70,6 +72,7 @@ export function DealEntry({
   onCancel,
   onSubmit,
   onDelete,
+  onSwitchToVachette,
 }: DealEntryProps) {
   const [deal, setDeal] = useState<ContractDeal>(initial)
   const patch = (changes: Partial<ContractDeal>) =>
@@ -156,7 +159,7 @@ export function DealEntry({
       </div>
 
       <Eyebrow>Contrat</Eyebrow>
-      <div className="chips">
+      <div className="chips chips--contracts">
         {CONTRACT_ORDER.map((contract: Contract) => (
           <Chip
             key={contract}
@@ -166,6 +169,14 @@ export function DealEntry({
             sub={`×${formatPoints(rules.multipliers[contract])}`}
           />
         ))}
+        {onSwitchToVachette && (
+          <Chip
+            selected={false}
+            onClick={onSwitchToVachette}
+            label={CONTRACT_LABELS.vachette}
+            sub="chacun pour soi"
+          />
+        )}
       </div>
 
       <Eyebrow>Bouts du preneur</Eyebrow>

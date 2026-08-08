@@ -93,10 +93,10 @@ export function CumulativeChart({ players, deals }: CumulativeChartProps) {
           0
         </text>
         <text x={PAD.left - 5} y={y(max) + 3} className="chart__tick" textAnchor="end">
-          {Math.round(max)}
+          {formatPoints(Math.round(max))}
         </text>
         <text x={PAD.left - 5} y={y(min) + 3} className="chart__tick" textAnchor="end">
-          {Math.round(min)}
+          {formatPoints(Math.round(min))}
         </text>
 
         {cursor !== null && (

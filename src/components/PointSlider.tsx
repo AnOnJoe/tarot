@@ -45,14 +45,14 @@ export function PointSlider({
           <Avatar player={taker} size={38} highlighted />
           <div>
             <div className="slider__campLabel">Attaque</div>
-            <div className="slider__campPoints num serif">{formatPoints(value)}</div>
+            <div className="slider__campPoints num display">{formatPoints(value)}</div>
           </div>
         </div>
 
         <div className="slider__camp slider__camp--right">
           <div>
             <div className="slider__campLabel">Défense</div>
-            <div className="slider__campPoints num serif">{formatPoints(defensePoints)}</div>
+            <div className="slider__campPoints num display">{formatPoints(defensePoints)}</div>
           </div>
           <div className="slider__stack">
             {defenders.map((player) => (

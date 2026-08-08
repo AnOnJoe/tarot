@@ -22,9 +22,14 @@
 .avatar[data-highlighted] {
   box-shadow:
     0 0 0 2px var(--bg),
-    0 0 0 4px var(--gold);
+    0 0 0 4px var(--accent);
 }
 
+/*
+ * Retrait léger seulement : à 0,34 les portraits viraient au brun boueux sur fond sombre
+ * et devenaient illisibles. C'est l'anneau d'accent qui porte la sélection, pas le
+ * ternissement des autres.
+ */
 .avatar[data-dimmed] {
-  opacity: 0.34;
+  opacity: 0.72;
 }

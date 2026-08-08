@@ -81,7 +81,7 @@ export function Home({ onResume, onNewGame, onOpenStats, onOpenRules }: HomeProp
               {current.players.map((player) => (
                 <span key={player.id} className="resume__player">
                   <Avatar player={player} size={40} />
-                  <span className="resume__score num serif">
+                  <span className="resume__score num display">
                     {formatPoints(current.totals[player.id] ?? 0)}
                   </span>
                 </span>

@@ -18,7 +18,7 @@ interface ScoreTableProps {
   players: Player[]
   deals: Deal[]
   totals: Record<PlayerId, number>
-  /** Joueur qui donne la prochaine donne : un liseré doré le signale. */
+  /** Joueur qui donne la prochaine donne. */
   nextDealerId: PlayerId
   /** Ouvre la saisie d'une donne avec ce joueur comme preneur. */
   onTake: (takerId: PlayerId) => void
@@ -28,8 +28,11 @@ interface ScoreTableProps {
 /**
  * Le tableau de la partie : une colonne par joueur, une ligne par donne.
  *
- * L'en-tête est collant et porte les cumuls ainsi que le bouton « + » de chaque joueur —
- * prendre la donne et désigner le preneur sont le même geste.
+ * La tuile entière d'un joueur est la cible tactile qui ouvre une donne dont il est
+ * preneur — désigner qui a pris et saisir la donne sont le même geste.
+ *
+ * Gain et perte se lisent à la couleur du chiffre, pas à un aplat derrière : l'information
+ * passe aussi bien et le tableau reste léger même sur vingt donnes.
  */
 export function ScoreTable({
   players,
@@ -39,36 +42,37 @@ export function ScoreTable({
   onTake,
   onOpenDeal,
 }: ScoreTableProps) {
-  const columns = `34px repeat(${players.length}, minmax(0, 1fr))`
+  const columns = `26px repeat(${players.length}, minmax(0, 1fr))`
+  // Les quarts de point de la Pousse allongent les cumuls (« −422,25 » fait sept signes) :
+  // la colonne rétrécit à cinq joueurs, la taille du chiffre suit plutôt que de déborder.
+  const totalSize = players.length >= 5 ? 13.5 : 16
 
   return (
     <div className="table">
-      <div className="table__head" style={{ gridTemplateColumns: columns }}>
-        <div className="table__gutter table__gutter--head" />
+      <div className="table__players" style={{ gridTemplateColumns: columns }}>
+        <span />
         {players.map((player) => {
           const total = totals[player.id] ?? 0
+          const isDealer = player.id === nextDealerId
           return (
-            <div key={player.id} className="table__player">
-              {player.id === nextDealerId && (
-                <span className="table__dealer">donne</span>
-              )}
-              <Avatar player={player} size={40} highlighted={player.id === nextDealerId} />
+            <button
+              key={player.id}
+              type="button"
+              className="tile-btn table__tile"
+              data-dealer={isDealer || undefined}
+              onClick={() => onTake(player.id)}
+            >
+              {isDealer && <span className="table__badge">donne</span>}
+              <Avatar player={player} size={34} />
               <span className="table__name">{player.name}</span>
               <span
-                className="table__total num serif"
-                data-sign={total > 0 ? 'up' : total < 0 ? 'down' : undefined}
+                className="table__total num display"
+                style={{ fontSize: totalSize }}
               >
                 {formatPoints(total)}
               </span>
-              <button
-                type="button"
-                className="table__take"
-                onClick={() => onTake(player.id)}
-                aria-label={`${player.name} prend`}
-              >
-                +
-              </button>
-            </div>
+              <span className="sr-only">{player.name} prend</span>
+            </button>
           )
         })}
       </div>

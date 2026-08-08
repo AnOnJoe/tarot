@@ -2,7 +2,7 @@
   margin: 0;
   padding: 14px;
   background: var(--surface);
-  border: 1px solid var(--line);
+
   border-radius: var(--r-card);
 }
 
@@ -26,7 +26,7 @@
 .chart__readout {
   text-transform: none;
   letter-spacing: 0;
-  color: var(--gold);
+  color: var(--accent);
 }
 
 .chart__svg {
@@ -43,7 +43,7 @@
 }
 
 .chart__crosshair {
-  stroke: var(--gold);
+  stroke: var(--accent);
   stroke-width: 1;
   stroke-dasharray: 3 3;
 }

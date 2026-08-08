@@ -58,9 +58,9 @@
 
 .pick--solo[aria-pressed="true"] .pick__solo {
   border-style: solid;
-  border-color: var(--gold);
-  background: var(--gold);
-  color: var(--gold-ink);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* Annonces rattachées à un joueur : une ligne par joueur. */
@@ -70,7 +70,7 @@
   gap: 2px;
   padding: 8px;
   background: var(--surface);
-  border: 1px solid var(--line);
+
   border-radius: var(--r-card);
 }
 
@@ -103,7 +103,7 @@
   width: 42px;
   height: 40px;
   padding: 0;
-  border: 1px solid var(--line);
+
   border-radius: 10px;
   background: var(--surface-3);
   font-size: 14px;
@@ -119,13 +119,13 @@
 }
 
 .mini[aria-pressed="true"] {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: var(--gold-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .mini[aria-pressed="true"] .mini__sub {
-  color: color-mix(in srgb, var(--gold-ink) 68%, transparent);
+  color: color-mix(in srgb, var(--accent-ink) 68%, transparent);
 }
 
 .hint {
@@ -139,7 +139,7 @@
 .detail {
   padding: 4px 14px;
   background: var(--surface);
-  border: 1px solid var(--line);
+
   border-radius: var(--r-card);
 }
 

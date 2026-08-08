@@ -2,10 +2,10 @@
   display: block;
   width: 100%;
   padding: 16px 14px 12px;
-  border: 1px solid var(--gold);
+  border: 1px solid var(--accent);
   border-radius: var(--r-card);
   background: var(--surface);
-  box-shadow: var(--shadow);
+  
   text-align: left;
   cursor: pointer;
 }
@@ -39,7 +39,7 @@
   padding-top: 10px;
   border-top: 1px solid var(--line);
   font-size: 13px;
-  color: var(--gold);
+  color: var(--accent);
 }
 
 .list__title {

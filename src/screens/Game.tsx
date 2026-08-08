@@ -60,6 +60,12 @@ export function Game({ game, rules, onExit, onEnd, onOpenStats }: GameProps) {
         onCancel={backToTable}
         onSubmit={(deal) => save(deal, mode.editing)}
         onDelete={mode.editing ? () => remove(mode.editing!) : undefined}
+        // La vachette est un contrat à part entière : on y bascule depuis la même rangée.
+        onSwitchToVachette={
+          rules.vacheeEnabled && !mode.editing
+            ? () => setMode({ view: 'vachette' })
+            : undefined
+        }
       />
     )
   }
@@ -93,14 +99,17 @@ export function Game({ game, rules, onExit, onEnd, onOpenStats }: GameProps) {
         </TopAction>
       }
       footer={
-        <div className="game__actions">
-          {rules.vacheeEnabled && (
-            <Button onClick={() => setMode({ view: 'vachette' })}>Vachette</Button>
-          )}
+        <>
+          <Button
+            variant="primary"
+            onClick={() => startContract(state.nextDealerId)}
+          >
+            Nouvelle donne
+          </Button>
           <Button variant="ghost" onClick={onEnd}>
             Terminer
           </Button>
-        </div>
+        </>
       }
     >
       <ScoreTable
@@ -115,8 +124,7 @@ export function Game({ game, rules, onExit, onEnd, onOpenStats }: GameProps) {
       {state.deals.length === 0 && (
         <EmptyState title="La partie commence">
           <p>
-            Touchez le <strong>+</strong> sous le portrait du joueur qui a pris. Le liseré
-            doré indique qui donne.
+            Touchez le joueur qui a pris pour saisir la donne. Le liseré indique qui donne.
           </p>
         </EmptyState>
       )}
