@@ -14,8 +14,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 13px 6px 12px;
+  gap: 5px;
+  padding: 13px 6px 11px;
   border-radius: var(--r-card);
   background: var(--surface);
 }
@@ -52,11 +52,21 @@
   text-overflow: ellipsis;
 }
 
-/* La taille exacte vient de ScoreTable : elle dépend du nombre de colonnes. */
+/* La taille exacte vient de ScoreTable : elle est déduite de la place disponible et de
+   la longueur du nombre. */
 .table__total {
   max-width: 100%;
-  line-height: 1.1;
+  margin-top: 1px;
+  line-height: 1.05;
   letter-spacing: -0.045em;
+  white-space: nowrap;
+}
+
+/* La décimale en second plan : elle reste lisible sans disputer sa place à l'unité. */
+.table__frac {
+  font-size: 0.58em;
+  font-weight: 640;
+  opacity: 0.72;
 }
 
 .table__body {

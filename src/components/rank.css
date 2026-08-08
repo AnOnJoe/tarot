@@ -1,0 +1,54 @@
+/*
+ * Couleurs du podium. Elles voisinent celles des joueurs, ce qui ne pose pas de problème
+ * ici : le rang est toujours écrit en chiffre, la teinte ne fait que le doubler.
+ */
+:root {
+  --rank-1: #e6c458;
+  --rank-2: #c3cad4;
+  --rank-3: #e0a084;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --rank-1: #a07a12;
+    --rank-2: #7b838e;
+    --rank-3: #a55f38;
+  }
+}
+
+.rank {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-faint);
+  line-height: 1;
+}
+
+.rank[data-rank="1"] {
+  color: var(--rank-1);
+}
+
+.rank[data-rank="2"] {
+  color: var(--rank-2);
+}
+
+.rank[data-rank="3"] {
+  color: var(--rank-3);
+}
+
+.rank__laurel {
+  width: 8px;
+  height: 15px;
+  fill: currentColor;
+}
+
+/* Un seul brin dessiné, retourné pour l'autre côté. */
+.rank__laurel[data-mirrored] {
+  transform: scaleX(-1);
+}
+
+.rank__value {
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}

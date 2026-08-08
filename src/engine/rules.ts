@@ -80,6 +80,21 @@ export function formatPoints(value: number): string {
   return text.replace('-', '−')
 }
 
+/**
+ * Sépare la partie entière de la décimale.
+ *
+ * Les quarts de point de la Pousse allongent les cumuls de trois signes, au point de
+ * réduire le chiffre à rien dans une colonne étroite. Les afficher en deux corps rend sa
+ * taille à ce qui compte — l'unité — sans rien retrancher de la valeur.
+ */
+export function splitPoints(value: number): { integer: string; fraction: string | null } {
+  const text = formatPoints(value)
+  const comma = text.indexOf(',')
+  return comma === -1
+    ? { integer: text, fraction: null }
+    : { integer: text.slice(0, comma), fraction: text.slice(comma) }
+}
+
 /** Formate un score signé, pour les colonnes de résultat. */
 export function formatSigned(value: number): string {
   if (value > 0) return `+${formatPoints(value)}`
