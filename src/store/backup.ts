@@ -1,13 +1,16 @@
 import { DEFAULT_RULES } from '../engine/rules'
+import { isValidTag, newTag } from '../engine/tag'
 import type { Deal, RuleSet } from '../engine/types'
 import type { Game, Player } from './db'
 
 /** Version du format. À incrémenter si la forme du fichier change. */
-export const BACKUP_VERSION = 2
+export const BACKUP_VERSION = 3
 
 /** Un joueur tel qu'il voyage dans le fichier : la photo devient du texte. */
 export interface BackupPlayer {
   id: string
+  /** Absent des sauvegardes d'avant les tags : un tag neuf est attribué à la lecture. */
+  tag?: string
   name: string
   colorIndex: number
   createdAt: number
@@ -56,8 +59,9 @@ async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
 
 export async function toBackupPlayers(players: Player[]): Promise<BackupPlayer[]> {
   return Promise.all(
-    players.map(async ({ id, name, colorIndex, createdAt, photo }) => ({
+    players.map(async ({ id, tag, name, colorIndex, createdAt, photo }) => ({
       id,
+      tag,
       name,
       colorIndex,
       createdAt,
@@ -67,14 +71,23 @@ export async function toBackupPlayers(players: Player[]): Promise<BackupPlayer[]
 }
 
 export async function fromBackupPlayers(players: BackupPlayer[]): Promise<Player[]> {
+  // Une sauvegarde antérieure aux tags n'en contient pas : on en attribue, en veillant à
+  // ne pas en donner deux fois le même — la fusion s'en sert pour identifier les personnes.
+  const taken = new Set(players.map((p) => p.tag).filter(Boolean) as string[])
   return Promise.all(
-    players.map(async ({ id, name, colorIndex, createdAt, photo }) => ({
-      id,
-      name,
-      colorIndex: colorIndex ?? 0,
-      createdAt: createdAt ?? Date.now(),
-      photo: photo ? await dataUrlToBlob(photo) : null,
-    })),
+    players.map(async ({ id, tag, name, colorIndex, createdAt, photo }) => {
+      let assigned = tag && isValidTag(tag) ? tag : newTag()
+      while (!tag && taken.has(assigned)) assigned = newTag()
+      taken.add(assigned)
+      return {
+        id,
+        tag: assigned,
+        name,
+        colorIndex: colorIndex ?? 0,
+        createdAt: createdAt ?? Date.now(),
+        photo: photo ? await dataUrlToBlob(photo) : null,
+      }
+    }),
   )
 }
 

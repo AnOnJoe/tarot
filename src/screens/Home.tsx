@@ -31,14 +31,31 @@ interface HomeProps {
   onNewGame: () => void
   onOpenStats: () => void
   onOpenAchievements: () => void
+  onOpenRoster: () => void
   onOpenRules: () => void
   onOpenBackup: () => void
 }
 
+/**
+ * Date et heure de création d'une partie.
+ *
+ * L'heure n'est pas décorative : deux parties du même soir se distinguent par elle, et une
+ * fois deux carnets fusionnés, plusieurs parties d'une même journée se côtoient.
+ */
 const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
+/** Forme courte, pour les lignes de liste. */
+const SHORT_FORMAT = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
 })
 
 export function Home({
@@ -48,6 +65,7 @@ export function Home({
   onNewGame,
   onOpenStats,
   onOpenAchievements,
+  onOpenRoster,
   onOpenRules,
   onOpenBackup,
 }: HomeProps) {
@@ -155,7 +173,7 @@ export function Home({
                       {winner ? `${winner.name} l'emporte` : 'Partie'}
                     </span>
                     <span className="list__meta">
-                      {DATE_FORMAT.format(summary.game.startedAt)} · {summary.dealCount} donne
+                      {SHORT_FORMAT.format(summary.game.startedAt)} · {summary.dealCount} donne
                       {summary.dealCount > 1 ? 's' : ''}
                     </span>
                   </span>
@@ -220,6 +238,10 @@ export function Home({
         </button>
         <button type="button" className="list__row" onClick={onOpenAchievements}>
           <span className="list__grow">Hauts faits</span>
+          <span className="list__meta">›</span>
+        </button>
+        <button type="button" className="list__row" onClick={onOpenRoster}>
+          <span className="list__grow">Carnet des joueurs</span>
           <span className="list__meta">›</span>
         </button>
         <button type="button" className="list__row" onClick={onOpenRules}>

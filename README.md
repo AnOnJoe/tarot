@@ -72,9 +72,9 @@ réellement qu'une fois déployé.
 
 | | |
 |---|---|
-| `src/engine/` | Calcul des points et hauts faits. TypeScript pur, sans React ni DOM, couvert par 71 tests |
+| `src/engine/` | Calcul des points et hauts faits. TypeScript pur, sans React ni DOM, couvert par 89 tests |
 | `src/store/` | Persistance IndexedDB (joueurs, parties, donnes, barèmes) et export |
-| `src/screens/` | Les huit écrans de l'application |
+| `src/screens/` | Les dix écrans de l'application |
 | `src/components/` | Portraits, tableau de scores, curseur de points, graphiques SVG |
 | `src/palette.ts` | Identité colorée des joueurs, validée pour le daltonisme |
 
@@ -86,6 +86,15 @@ qu'au logo.
 Le moteur est isolé à dessein : c'est la seule partie qui doit être irréprochable, et il
 resterait portable tel quel si une version native voyait le jour. Un test vérifie sur
 900 donnes générées que **la somme des scores d'une donne vaut toujours zéro**.
+
+### Tags de joueur
+
+Un joueur porte un `id` — un UUID tiré localement — et un **tag** court et dictable de la
+forme `K7M-2PQ`. Deux personnes qui saisissent « Joachim » chacune de leur côté obtiennent
+deux UUID différents pour la même personne : le tag est ce qui permet de les reconnaître au
+moment de fusionner deux carnets, et il se modifie depuis le **Carnet des joueurs**.
+
+L'alphabet exclut `I`, `L`, `O` et donc aussi `0` et `1` : un tag se dicte au téléphone.
 
 ### Hauts faits
 
@@ -103,10 +112,10 @@ production.
 ## Ce que l'application ne fait pas
 
 - **Pas de retour haptique** : Safari sur iOS n'implémente pas `navigator.vibrate`.
-- **Pas de synchronisation** entre appareils. Chaque iPhone garde ses propres parties ;
-  l'écran **Sauvegarde** exporte un JSON complet — noms, **photos comprises**, parties,
-  donnes et barèmes — et sait le restaurer sur n'importe quel appareil. La restauration
-  **remplace** le contenu local : deux appareils qui ont divergé n'ont pas de
-  réconciliation évidente, et une fusion silencieuse créerait des doublons.
+- **Pas de synchronisation automatique** entre appareils : sans serveur, elle passe par un
+  fichier. L'écran **Sauvegarde** propose deux gestes distincts — **fusionner** le fichier
+  de quelqu'un d'autre (rien n'est écrasé, l'opération est idempotente), ou **remplacer**
+  entièrement le contenu local par une sauvegarde. Pour synchroniser à deux, chacun exporte
+  et fusionne le fichier de l'autre.
 - **Rien n'est envoyé sur Internet** : le fichier de sauvegarde part là où vous l'envoyez,
   et nulle part ailleurs.

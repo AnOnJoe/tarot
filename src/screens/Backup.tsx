@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Button, Eyebrow, Screen, TopAction } from '../components/ui'
 import type { BackupSummary } from '../store/backup'
+import type { MergeSummary } from '../store/merge'
 import { listAllDeals, listGames, listPlayers } from '../store/db'
-import { exportEverything, importBackup } from '../store/export'
+import { exportEverything, importBackup, mergeBackup } from '../store/export'
 import './backup.css'
 
 interface BackupProps {
@@ -26,6 +27,7 @@ export function Backup({ onClose, onRestored }: BackupProps) {
   const [counts, setCounts] = useState({ players: 0, games: 0, deals: 0, photos: 0 })
   const [busy, setBusy] = useState(false)
   const [restored, setRestored] = useState<BackupSummary | null>(null)
+  const [merged, setMerged] = useState<MergeSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -41,10 +43,43 @@ export function Backup({ onClose, onRestored }: BackupProps) {
     )
   }, [])
 
+  /**
+   * Fusion : on ajoute ce qui manque, sans rien remplacer. Aucune confirmation à
+   * demander — rien de local ne peut être perdu.
+   */
+  const merge = async (file: File | undefined) => {
+    if (!file || busy) return
+    setError(null)
+    setRestored(null)
+    setMerged(null)
+    setBusy(true)
+    try {
+      const summary = await mergeBackup(file)
+      setMerged(summary)
+      const [players, games, deals] = await Promise.all([
+        listPlayers(),
+        listGames(),
+        listAllDeals(),
+      ])
+      setCounts({
+        players: players.length,
+        games: games.length,
+        deals: deals.length,
+        photos: players.filter((p) => p.photo).length,
+      })
+      onRestored()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Fusion impossible.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const restore = async (file: File | undefined) => {
     if (!file || busy) return
     setError(null)
     setRestored(null)
+    setMerged(null)
 
     const warning =
       `Restaurer remplacera tout ce que contient cet appareil : ` +
@@ -94,6 +129,37 @@ export function Backup({ onClose, onRestored }: BackupProps) {
         </Button>
       </div>
 
+      <Eyebrow>Synchroniser avec quelqu'un</Eyebrow>
+      <p className="backup__note">
+        Fusionne le fichier de quelqu'un d'autre avec le vôtre : ce qui manque est ajouté,
+        <strong> rien n'est remplacé</strong>. Faites-le dans les deux sens pour que chacun
+        ait tout. Les joueurs se reconnaissent à leur <strong>tag</strong> — vérifiez dans
+        le carnet que la même personne porte bien le même des deux côtés.
+      </p>
+
+      <label className="backup__action">
+        <span className="btn btn--primary">{busy ? 'Fusion…' : 'Fusionner un fichier'}</span>
+        <input
+          type="file"
+          accept="application/json,.json"
+          disabled={busy}
+          onChange={(event) => merge(event.target.files?.[0])}
+        />
+      </label>
+
+      {merged && (
+        <div className="backup__done">
+          <p className="backup__doneTitle">Fusion terminée</p>
+          <p>
+            {merged.playersAdded} joueur{merged.playersAdded > 1 ? 's' : ''} ajouté
+            {merged.playersAdded > 1 ? 's' : ''}, {merged.playersMatched} reconnu
+            {merged.playersMatched > 1 ? 's' : ''} par leur tag. {merged.gamesAdded} partie
+            {merged.gamesAdded > 1 ? 's' : ''} et {merged.dealsAdded} donne
+            {merged.dealsAdded > 1 ? 's' : ''} ajoutée{merged.dealsAdded > 1 ? 's' : ''}.
+          </p>
+        </div>
+      )}
+
       <Eyebrow>Restaurer</Eyebrow>
       <p className="backup__note">
         Choisissez un fichier <strong>tarot-….json</strong>. Son contenu remplacera
@@ -101,7 +167,7 @@ export function Backup({ onClose, onRestored }: BackupProps) {
       </p>
 
       <label className="backup__action">
-        <span className="btn">{busy ? 'Restauration…' : 'Choisir un fichier'}</span>
+        <span className="btn">{busy ? 'Restauration…' : 'Remplacer par un fichier'}</span>
         <input
           type="file"
           accept="application/json,.json"

@@ -1,11 +1,20 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import { DEFAULT_RULES } from '../engine/rules'
+import { newTag } from '../engine/tag'
 import { SERIES_SLOTS } from '../palette'
 import type { Deal, PlayerId, RuleSet } from '../engine/types'
 
 /** Un joueur du carnet, réutilisable d'une partie à l'autre. */
 export interface Player {
   id: PlayerId
+  /**
+   * Identifiant court et dictable, propre à la personne et non à l'appareil.
+   *
+   * C'est lui qui permet de reconnaître le même joueur dans le carnet de quelqu'un
+   * d'autre : l'`id` est un UUID tiré localement, deux appareils n'ont aucune chance
+   * d'attribuer le même à la même personne.
+   */
+  tag: string
   name: string
   /** Photo recadrée, stockée en Blob sur l'appareil. Rien n'est envoyé sur le réseau. */
   photo: Blob | null
@@ -37,14 +46,35 @@ interface TarotDB extends DBSchema {
 let dbPromise: Promise<IDBPDatabase<TarotDB>> | null = null
 
 function db(): Promise<IDBPDatabase<TarotDB>> {
-  dbPromise ??= openDB<TarotDB>('tarot', 1, {
-    upgrade(database) {
-      database.createObjectStore('players', { keyPath: 'id' })
-      const games = database.createObjectStore('games', { keyPath: 'id' })
-      games.createIndex('byStart', 'startedAt')
-      const deals = database.createObjectStore('deals', { keyPath: 'id' })
-      deals.createIndex('byGame', 'gameId')
-      database.createObjectStore('settings')
+  dbPromise ??= openDB<TarotDB>('tarot', 2, {
+    upgrade(database, oldVersion, _newVersion, tx) {
+      if (oldVersion < 1) {
+        database.createObjectStore('players', { keyPath: 'id' })
+        const games = database.createObjectStore('games', { keyPath: 'id' })
+        games.createIndex('byStart', 'startedAt')
+        const deals = database.createObjectStore('deals', { keyPath: 'id' })
+        deals.createIndex('byGame', 'gameId')
+        database.createObjectStore('settings')
+      }
+
+      if (oldVersion < 2) {
+        // Les joueurs créés avant l'existence des tags en reçoivent un ici : sans quoi ils
+        // seraient invisibles à la fusion, qui ne reconnaît les personnes que par leur tag.
+        const players = tx.objectStore('players')
+        players.getAll().then((existing) => {
+          const taken = new Set<string>()
+          for (const player of existing) {
+            if (player.tag && !taken.has(player.tag)) {
+              taken.add(player.tag)
+              continue
+            }
+            let tag = newTag()
+            while (taken.has(tag)) tag = newTag()
+            taken.add(tag)
+            players.put({ ...player, tag })
+          }
+        })
+      }
     },
   })
   return dbPromise
@@ -70,14 +100,20 @@ export async function getPlayers(ids: PlayerId[]): Promise<Player[]> {
 
 export async function createPlayer(name: string, photo: Blob | null): Promise<Player> {
   const existing = await listPlayers()
+
+  const usedTags = new Set(existing.map((p) => p.tag))
+  let tag = newTag()
+  while (usedTags.has(tag)) tag = newTag()
+
   // Le premier slot libre plutôt que le suivant : après une suppression, on réutilise la
   // couleur laissée vacante au lieu de faire dériver toute la palette.
-  const taken = new Set(existing.map((p) => p.colorIndex))
+  const usedColors = new Set(existing.map((p) => p.colorIndex))
   let colorIndex = 0
-  while (colorIndex < SERIES_SLOTS && taken.has(colorIndex)) colorIndex++
+  while (colorIndex < SERIES_SLOTS && usedColors.has(colorIndex)) colorIndex++
 
   const player: Player = {
     id: newId(),
+    tag,
     name: name.trim(),
     photo,
     colorIndex: colorIndex % SERIES_SLOTS,
@@ -264,6 +300,21 @@ export async function resetRules(): Promise<void> {
  * Tout se joue dans une seule transaction : si l'écriture échoue en chemin, rien n'est
  * appliqué et l'appareil garde ses parties — plutôt qu'un carnet à moitié restauré.
  */
+/** Tout ce que contient l'appareil, pour l'exporter ou le confronter à un autre carnet. */
+export async function readAll(): Promise<{
+  players: Player[]
+  games: Game[]
+  deals: Deal[]
+}> {
+  const database = await db()
+  const [players, games, deals] = await Promise.all([
+    database.getAll('players'),
+    database.getAll('games'),
+    database.getAll('deals'),
+  ])
+  return { players, games, deals }
+}
+
 export async function replaceAll(data: {
   players: Player[]
   games: Game[]

@@ -12,6 +12,7 @@ const COUNTS: PlayerCount[] = [3, 4, 5]
 /** Joueur factice servant uniquement à prévisualiser la photo avant enregistrement. */
 const PREVIEW_PLAYER: Player = {
   id: 'preview',
+  tag: 'AAA-222',
   name: '',
   photo: null,
   colorIndex: 0,

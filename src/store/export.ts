@@ -9,7 +9,8 @@ import {
   type Backup,
   type BackupSummary,
 } from './backup'
-import { listAllDeals, listGames, listPlayers, loadRules, replaceAll } from './db'
+import { listAllDeals, listGames, listPlayers, loadRules, readAll, replaceAll } from './db'
+import { mergeDatasets, type MergeSummary } from './merge'
 
 /**
  * Sauvegarde complète : joueurs, photos comprises, parties, donnes et barèmes.
@@ -113,4 +114,27 @@ export async function importBackup(file: File): Promise<BackupSummary> {
     rules: backup.rules,
   })
   return summarize(backup)
+}
+
+/**
+ * Fusionne le carnet d'un autre appareil avec celui-ci, sans rien écraser.
+ *
+ * C'est le mécanisme de synchronisation entre deux personnes : chacune exporte, l'autre
+ * fusionne, et l'opération se refait dans l'autre sens. Elle est idempotente — fusionner
+ * deux fois le même fichier ne duplique rien.
+ *
+ * Les barèmes locaux ne sont pas touchés : ce sont des réglages d'appareil, pas de
+ * l'historique, et les écraser changerait le calcul des donnes à venir.
+ */
+export async function mergeBackup(file: File): Promise<MergeSummary> {
+  const backup = parseBackup(await file.text())
+  const incoming = {
+    players: await fromBackupPlayers(backup.players),
+    games: backup.games,
+    deals: backup.deals,
+  }
+  const local = await readAll()
+  const { dataset, summary } = mergeDatasets(local, incoming)
+  await replaceAll({ ...dataset, rules: await loadRules() })
+  return summary
 }

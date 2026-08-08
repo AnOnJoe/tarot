@@ -6,6 +6,7 @@ import { Backup } from './screens/Backup'
 import { Game } from './screens/Game'
 import { Home } from './screens/Home'
 import { NewGame } from './screens/NewGame'
+import { Roster } from './screens/Roster'
 import { Rules } from './screens/Rules'
 import { Stats } from './screens/Stats'
 import {
@@ -31,6 +32,7 @@ type View =
   | { name: 'stats'; game?: GameRecord; back: 'accueil' | 'partie'; celebrate?: boolean }
   | { name: 'regles' }
   | { name: 'hautsFaits' }
+  | { name: 'carnet' }
   | { name: 'sauvegarde' }
 
 /** Durée minimale d'affichage de la marque au lancement, en millisecondes. */
@@ -124,6 +126,9 @@ export function App() {
       case 'hautsFaits':
         return <Achievements onClose={() => setView({ name: 'accueil' })} />
 
+      case 'carnet':
+        return <Roster onClose={() => setView({ name: 'accueil' })} />
+
       case 'sauvegarde':
         return (
           <Backup
@@ -149,6 +154,7 @@ export function App() {
             onNewGame={() => setView({ name: 'nouvelle' })}
             onOpenStats={() => setView({ name: 'stats', back: 'accueil' })}
             onOpenAchievements={() => setView({ name: 'hautsFaits' })}
+            onOpenRoster={() => setView({ name: 'carnet' })}
             onOpenRules={() => setView({ name: 'regles' })}
             onOpenBackup={() => setView({ name: 'sauvegarde' })}
           />
