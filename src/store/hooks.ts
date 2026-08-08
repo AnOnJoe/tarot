@@ -161,67 +161,7 @@ export function useGame(game: Game, rules: RuleSet | null): GameState {
   }
 }
 
-/** URL d'objet pour une photo stockée, révoquée automatiquement au démontage. */
-/**
- * Cache des photos déjà converties, indexé par le Blob lui-même.
- *
- * Chaque lecture en base rend de nouveaux Blob : sans ce cache, revenir sur un écran
- * relancerait une conversion par portrait affiché. La table est faible, les entrées
- * disparaissent avec les Blob qu'elles décrivent.
+/*
+ * Les photos sont stockées en `data:` URL et s'affichent donc directement (cf. `Avatar`).
+ * Ni conversion ni cache : le hook qui s'en chargeait n'a plus lieu d'être.
  */
-const photoCache = new WeakMap<Blob, string>()
-
-function toDataUrl(photo: Blob): Promise<string> {
-  const cached = photoCache.get(photo)
-  if (cached) return Promise.resolve(cached)
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const url = String(reader.result)
-      photoCache.set(photo, url)
-      resolve(url)
-    }
-    reader.onerror = () => reject(reader.error ?? new Error('Lecture impossible'))
-    reader.readAsDataURL(photo)
-  })
-}
-
-/**
- * Source d'affichage d'une photo, en `data:` URL.
- *
- * En `data:` plutôt qu'en `URL.createObjectURL`, qui exige de révoquer l'URL au démontage.
- * Cette révocation est une source d'ennuis dès qu'un même portrait est rendu à plusieurs
- * endroits ou qu'une liste se recharge : le Blob change d'identité, l'ancienne URL est
- * révoquée, et l'image qui s'en servait encore reste vide jusqu'à un remontage complet —
- * exactement le défaut observé, un portrait absent tant qu'on n'a pas quitté l'écran.
- *
- * Une `data:` URL n'a aucun cycle de vie à gérer. Les photos font 256 px et quelques
- * kilo-octets : le surcoût est sans conséquence.
- */
-export function usePhotoUrl(photo: Blob | null): string | null {
-  const [url, setUrl] = useState<string | null>(() =>
-    photo ? (photoCache.get(photo) ?? null) : null,
-  )
-
-  useEffect(() => {
-    if (!photo) {
-      setUrl(null)
-      return
-    }
-    const cached = photoCache.get(photo)
-    if (cached) {
-      setUrl(cached)
-      return
-    }
-
-    let alive = true
-    toDataUrl(photo)
-      .then((result) => alive && setUrl(result))
-      .catch(() => alive && setUrl(null))
-    return () => {
-      alive = false
-    }
-  }, [photo])
-
-  return url
-}

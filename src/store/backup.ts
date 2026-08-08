@@ -6,7 +6,7 @@ import type { Game, Player } from './db'
 /** Version du format. À incrémenter si la forme du fichier change. */
 export const BACKUP_VERSION = 3
 
-/** Un joueur tel qu'il voyage dans le fichier : la photo devient du texte. */
+/** Un joueur tel qu'il voyage dans le fichier — identique à celui de la base. */
 export interface BackupPlayer {
   id: string
   /** Absent des sauvegardes d'avant les tags : un tag neuf est attribué à la lecture. */
@@ -37,58 +37,34 @@ export interface BackupSummary {
   exportedAt: string | null
 }
 
-/**
- * Convertit une photo en texte.
- *
- * Le JSON ne sait pas transporter de données binaires : sans cette conversion, les photos
- * seraient les seules choses que la sauvegarde laisserait derrière elle.
- */
-function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(reader.error ?? new Error('Lecture impossible'))
-    reader.readAsDataURL(blob)
-  })
-}
-
-async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
-  const response = await fetch(dataUrl)
-  return response.blob()
-}
-
 export async function toBackupPlayers(players: Player[]): Promise<BackupPlayer[]> {
-  return Promise.all(
-    players.map(async ({ id, tag, name, colorIndex, createdAt, photo }) => ({
-      id,
-      tag,
-      name,
-      colorIndex,
-      createdAt,
-      photo: photo ? await blobToDataUrl(photo) : null,
-    })),
-  )
+  return players.map(({ id, tag, name, colorIndex, createdAt, photo }) => ({
+    id,
+    tag,
+    name,
+    colorIndex,
+    createdAt,
+    photo,
+  }))
 }
 
 export async function fromBackupPlayers(players: BackupPlayer[]): Promise<Player[]> {
   // Une sauvegarde antérieure aux tags n'en contient pas : on en attribue, en veillant à
   // ne pas en donner deux fois le même — la fusion s'en sert pour identifier les personnes.
   const taken = new Set(players.map((p) => p.tag).filter(Boolean) as string[])
-  return Promise.all(
-    players.map(async ({ id, tag, name, colorIndex, createdAt, photo }) => {
-      let assigned = tag && isValidTag(tag) ? tag : newTag()
-      while (!tag && taken.has(assigned)) assigned = newTag()
-      taken.add(assigned)
-      return {
-        id,
-        tag: assigned,
-        name,
-        colorIndex: colorIndex ?? 0,
-        createdAt: createdAt ?? Date.now(),
-        photo: photo ? await dataUrlToBlob(photo) : null,
-      }
-    }),
-  )
+  return players.map(({ id, tag, name, colorIndex, createdAt, photo }) => {
+    let assigned = tag && isValidTag(tag) ? tag : newTag()
+    while (!tag && taken.has(assigned)) assigned = newTag()
+    taken.add(assigned)
+    return {
+      id,
+      tag: assigned,
+      name,
+      colorIndex: colorIndex ?? 0,
+      createdAt: createdAt ?? Date.now(),
+      photo: photo ?? null,
+    }
+  })
 }
 
 /**

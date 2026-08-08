@@ -16,8 +16,17 @@ export interface Player {
    */
   tag: string
   name: string
-  /** Photo recadrée, stockée en Blob sur l'appareil. Rien n'est envoyé sur le réseau. */
-  photo: Blob | null
+  /**
+   * Photo recadrée, stockée en `data:` URL sur l'appareil. Rien n'est envoyé sur le réseau.
+   *
+   * En texte et non en Blob : un Blob rendu par IndexedDB pointe vers un fichier géré par
+   * la base, et WebKit invalide ce fichier dès qu'on réécrit l'enregistrement qui le
+   * portait. Le portrait devenait alors illisible jusqu'au prochain lancement — le défaut
+   * observé après un simple « Enregistrer » sans modification.
+   *
+   * Une chaîne n'a pas de support externe : elle survit à sa propre réécriture.
+   */
+  photo: string | null
   /**
    * Slot de la palette (0 à 7). On stocke le rang, pas le pigment : le thème clair et le
    * thème sombre n'emploient pas les mêmes valeurs pour une même identité.
@@ -84,8 +93,40 @@ function db(): Promise<IDBPDatabase<TarotDB>> {
         })
       }
     },
+  }).then(async (database) => {
+    await textifyPhotos(database)
+    return database
   })
   return dbPromise
+}
+
+/**
+ * Reprend les photos stockées en Blob par les versions précédentes et les réécrit en texte.
+ *
+ * Hors de la migration de schéma à dessein : la lecture d'un Blob passe par un
+ * `FileReader`, donc par un tour de boucle d'événements, et une transaction de migration
+ * se referme dès qu'on lui rend la main. Le drapeau évite d'y revenir à chaque lancement.
+ */
+async function textifyPhotos(database: IDBPDatabase<TarotDB>): Promise<void> {
+  if (await database.get('settings', 'photosAsText')) return
+
+  for (const player of await database.getAll('players')) {
+    const photo: unknown = player.photo
+    if (!(photo instanceof Blob)) continue
+    await database.put('players', { ...player, photo: await blobToDataUrl(photo) })
+  }
+
+  await database.put('settings', true, 'photosAsText')
+}
+
+/** Rend `null` plutôt que d'échouer : un portrait illisible ne doit pas bloquer l'ouverture. */
+function blobToDataUrl(blob: Blob): Promise<string | null> {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => resolve(null)
+    reader.readAsDataURL(blob)
+  })
 }
 
 /** Identifiant court et unique, suffisant pour un usage local mono-appareil. */
@@ -106,7 +147,7 @@ export async function getPlayers(ids: PlayerId[]): Promise<Player[]> {
   return found.filter((p): p is Player => p !== undefined)
 }
 
-export async function createPlayer(name: string, photo: Blob | null): Promise<Player> {
+export async function createPlayer(name: string, photo: string | null): Promise<Player> {
   const existing = await listPlayers()
 
   const usedTags = new Set(existing.map((p) => p.tag))

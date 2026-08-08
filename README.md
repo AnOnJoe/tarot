@@ -49,7 +49,7 @@ recharge si une nouvelle version est en ligne.
 
 | Écran | À quoi il sert |
 |---|---|
-| **Accueil** | Reprendre la partie en cours, revoir les parties terminées, accéder aux réglages |
+| **Accueil** | Reprendre la partie en cours, revoir les trois dernières parties — *Voir les N parties* déplie l'historique complet, *Paramètres* le reste |
 | **Nouvelle partie** | Composer la table et désigner le premier donneur |
 | **Partie** | Le tableau des donnes, les cumuls, le rang de chacun |
 | **Saisie d'une donne** | Preneur, contrat, bouts, annonces, curseur de points, détail du calcul |
@@ -188,8 +188,6 @@ toutes les installations déjà posées sur un écran d'accueil.
   à la main.
 - **Rien n'est envoyé sur Internet.** Les photos ne quittent jamais l'appareil, sauf dans un
   fichier de sauvegarde que vous envoyez vous-même.
-- **Pas de limite au nombre de parties affichées** à l'accueil : la liste s'allonge
-  indéfiniment.
 
 ---
 

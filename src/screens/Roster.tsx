@@ -90,7 +90,7 @@ function PlayerEditor({
 }) {
   const [name, setName] = useState(player?.name ?? '')
   const [tag, setTag] = useState(player?.tag ?? '')
-  const [photo, setPhoto] = useState<Blob | null>(player?.photo ?? null)
+  const [photo, setPhoto] = useState<string | null>(player?.photo ?? null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 

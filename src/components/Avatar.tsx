@@ -1,6 +1,5 @@
 import { seriesColor, seriesInk } from '../palette'
 import type { Player } from '../store/db'
-import { usePhotoUrl } from '../store/hooks'
 import { initials } from '../store/photo'
 import './avatar.css'
 
@@ -19,7 +18,7 @@ interface AvatarProps {
  * colonnes tiennent, photo ou pas.
  */
 export function Avatar({ player, size = 44, highlighted, dimmed }: AvatarProps) {
-  const url = usePhotoUrl(player?.photo ?? null)
+  const url = player?.photo ?? null
 
   return (
     <span

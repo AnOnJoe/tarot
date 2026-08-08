@@ -83,8 +83,10 @@ code relu**. Plusieurs bugs de cette base ont été trouvés ainsi, jamais par r
   jour explicites dans `src/pwa.ts`.
 - **Une transaction de migration IndexedDB se referme** dès qu'on lui rend la main. Jamais
   d'écriture dans un `.then` détaché.
-- **`URL.createObjectURL` est proscrit ici** : la révocation laissait des portraits vides.
-  Les photos passent en `data:` URL.
+- **Aucun Blob en base.** Les photos sont stockées en `data:` URL. Un Blob rendu par
+  IndexedDB pointe vers un fichier de la base que WebKit libère dès qu'on réécrit
+  l'enregistrement — le portrait devenait illisible jusqu'au lancement suivant.
+  `URL.createObjectURL` est proscrit pour la même famille de raisons.
 - **`touch-action: none`** est indispensable sur toute poignée de glissement, et doit rester
   cantonnée à la poignée pour ne pas bloquer le défilement.
 - **iOS zoome** sur tout champ dont le texte descend sous 16 px.

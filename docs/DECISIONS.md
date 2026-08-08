@@ -125,19 +125,35 @@ justifie un rechargement.
 
 ---
 
-## Photos : `data:` plutôt qu'`URL.createObjectURL`
+## Photos : du texte en base, jamais de Blob
 
-Une URL d'objet doit être révoquée au démontage. Chaque lecture en base rend de nouveaux
-Blob : quand une liste se recharge, l'ancien Blob change d'identité, l'effet se rejoue et
-révoque l'URL précédente. L'image qui la portait encore reste vide, et ne s'en remet qu'à un
-remontage complet du composant.
+Deux défauts distincts, deux fois le même coupable — un Blob a un cycle de vie, une chaîne
+n'en a pas.
 
-Symptôme observé : un portrait absent, qui réapparaît après un aller-retour vers un autre
-écran.
+**D'abord `URL.createObjectURL`.** Une URL d'objet doit être révoquée au démontage. Chaque
+lecture en base rend de nouveaux Blob : quand une liste se recharge, l'ancien Blob change
+d'identité, l'effet se rejoue et révoque l'URL précédente. L'image qui la portait encore
+reste vide. Symptôme : un portrait absent, qui revient après un aller-retour vers un autre
+écran. Corrigé en convertissant à l'affichage en `data:` URL.
 
-Les photos passent donc en `data:` URL, qui n'ont aucun cycle de vie. Elles font 256 px et
-quelques kilo-octets ; un cache faible indexé par Blob évite de reconvertir à chaque
-affichage.
+**Puis le Blob lui-même.** Le portrait disparaissait encore après un simple *Enregistrer*
+sans modification, et ne revenait qu'au lancement suivant. Un Blob rendu par IndexedDB ne
+porte pas ses octets : il pointe vers un fichier géré par la base. WebKit libère ce fichier
+dès que l'enregistrement qui le référençait est réécrit — même si l'écriture repose
+exactement le même Blob. Le portrait encore affiché tenait alors une référence morte.
+
+Les photos sont donc **stockées en `data:` URL**, pas en Blob. Une chaîne survit à sa propre
+réécriture, s'affiche sans conversion ni cache, et voyage telle quelle dans la sauvegarde,
+qui l'employait déjà. Le surcoût du base64 est d'un tiers sur des vignettes de 256 px.
+
+`preparePhoto` rend donc directement `canvas.toDataURL`, et les photos déjà en base sont
+reprises **hors de la migration de schéma** : leur lecture passe par un `FileReader`, donc
+par un tour de boucle d'événements, et une transaction de migration se referme dès qu'on lui
+rend la main. Un drapeau en `settings` évite d'y revenir à chaque lancement.
+
+> Le premier défaut ne s'est jamais reproduit sous Chrome, le second non plus : les deux
+> tiennent à WebKit. Ce qui est vérifiable en test, c'est qu'aucun Blob ne subsiste en base
+> — le mécanisme est retiré, pas contourné.
 
 ---
 
@@ -173,6 +189,11 @@ laisse le reste de l'écran défiler.
 **La taille du cumul est déduite de la place mesurée** et de la longueur du nombre, pas
 fixée à l'avance. C'est la longueur qui contraint, pas le nombre de joueurs : à quatre,
 `150` tient en 35 px là où `−422,25` plafonne à 15.
+
+**L'accueil ne montre que trois parties**, celle en cours comprise — elle occupe l'une des
+trois places, car elle en est une pour qui regarde l'écran, même si elle a sa propre carte.
+Le reste tient derrière *Voir les N parties*, et les réglages derrière *Paramètres* : on
+ouvre l'application pour jouer, pas pour consulter des archives ni changer un barème.
 
 **Rouvrir une partie close clôt toute autre partie ouverte.** L'accueil suppose une seule
 partie en cours ; sans cela, deux parties se disputeraient la même place et l'une

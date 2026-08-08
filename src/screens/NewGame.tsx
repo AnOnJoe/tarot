@@ -34,7 +34,7 @@ export function NewGame({ onCancel, onStart }: NewGameProps) {
   const [selected, setSelected] = useState<PlayerId[]>([])
   const [firstDealer, setFirstDealer] = useState(0)
   const [newName, setNewName] = useState('')
-  const [photo, setPhoto] = useState<Blob | null>(null)
+  const [photo, setPhoto] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 

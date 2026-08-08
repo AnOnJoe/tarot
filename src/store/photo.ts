@@ -7,8 +7,11 @@ const SIZE = 256
  * Les photos de l'iPhone pèsent plusieurs mégaoctets : les garder telles quelles
  * saturerait IndexedDB et ralentirait le rendu du tableau. Tout se passe dans le
  * navigateur, aucune image ne quitte l'appareil.
+ *
+ * Le résultat est une `data:` URL, et non un Blob : c'est la forme sous laquelle les
+ * photos sont stockées. Cf. `Player.photo` pour la raison.
  */
-export async function preparePhoto(file: File): Promise<Blob> {
+export async function preparePhoto(file: File): Promise<string> {
   const bitmap = await createImageBitmap(file)
   const side = Math.min(bitmap.width, bitmap.height)
   const sx = (bitmap.width - side) / 2
@@ -22,13 +25,7 @@ export async function preparePhoto(file: File): Promise<Blob> {
   context.drawImage(bitmap, sx, sy, side, side, 0, 0, SIZE, SIZE)
   bitmap.close()
 
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error('Conversion impossible'))),
-      'image/jpeg',
-      0.85,
-    )
-  })
+  return canvas.toDataURL('image/jpeg', 0.85)
 }
 
 /** Initiales affichées quand aucune photo n'a été choisie. */

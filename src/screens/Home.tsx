@@ -3,7 +3,7 @@ import { formatPoints } from '../engine/rules'
 import { cumulative } from '../engine/score'
 import { Avatar } from '../components/Avatar'
 import { Logo, TAGLINE } from '../components/Logo'
-import { Button, EmptyState, Screen, Sheet } from '../components/ui'
+import { Button, Collapsible, EmptyState, Screen, Sheet } from '../components/ui'
 import {
   type Game,
   type Player,
@@ -58,6 +58,14 @@ const SHORT_FORMAT = new Intl.DateTimeFormat('fr-FR', {
   minute: '2-digit',
 })
 
+/**
+ * Nombre de parties visibles d'emblée, celle en cours comprise.
+ *
+ * L'accueil sert à reprendre la soirée, pas à consulter les archives : au bout de quelques
+ * mois la liste complète repousserait tout le reste hors de l'écran.
+ */
+const RECENT = 3
+
 export function Home({
   onResume,
   onOpenGameStats,
@@ -73,6 +81,7 @@ export function Home({
   const [loading, setLoading] = useState(true)
   /** Partie close sur laquelle on vient d'appuyer, en attente d'un choix. */
   const [chosen, setChosen] = useState<GameSummary | null>(null)
+  const [showAll, setShowAll] = useState(false)
 
   const load = async () => {
     const games = await listGames()
@@ -106,6 +115,10 @@ export function Home({
 
   const current = summaries.find((s) => s.game.endedAt === null)
   const past = summaries.filter((s) => s.game.endedAt !== null)
+  // La partie en cours occupe l'une des trois places : elle est une partie comme une autre
+  // du point de vue de qui regarde l'écran, même si elle a sa propre carte.
+  const shown = showAll ? past : past.slice(0, current ? RECENT - 1 : RECENT)
+  const hidden = past.length - shown.length
 
   return (
     <Screen
@@ -146,9 +159,11 @@ export function Home({
 
       {past.length > 0 && (
         <>
-          <p className="eyebrow">Parties terminées</p>
+          <p className="eyebrow">
+            {showAll || hidden === 0 ? 'Parties terminées' : 'Dernières parties'}
+          </p>
           <div className="list">
-            {past.map((summary) => {
+            {shown.map((summary) => {
               const winner = summary.players.reduce<Player | undefined>(
                 (best, player) =>
                   !best || (summary.totals[player.id] ?? 0) > (summary.totals[best.id] ?? 0)
@@ -184,6 +199,16 @@ export function Home({
               )
             })}
           </div>
+          {hidden > 0 && (
+            <Button variant="ghost" onClick={() => setShowAll(true)}>
+              Voir les {past.length} parties
+            </Button>
+          )}
+          {showAll && past.length > RECENT && (
+            <Button variant="ghost" onClick={() => setShowAll(false)}>
+              N'afficher que les dernières
+            </Button>
+          )}
         </>
       )}
 
@@ -230,29 +255,31 @@ export function Home({
         </Sheet>
       )}
 
-      <p className="eyebrow">Réglages</p>
-      <div className="list">
-        <button type="button" className="list__row" onClick={onOpenStats}>
-          <span className="list__grow">Statistiques</span>
-          <span className="list__meta">›</span>
-        </button>
-        <button type="button" className="list__row" onClick={onOpenAchievements}>
-          <span className="list__grow">Hauts faits</span>
-          <span className="list__meta">›</span>
-        </button>
-        <button type="button" className="list__row" onClick={onOpenRoster}>
-          <span className="list__grow">Carnet des joueurs</span>
-          <span className="list__meta">›</span>
-        </button>
-        <button type="button" className="list__row" onClick={onOpenRules}>
-          <span className="list__grow">Règles maison</span>
-          <span className="list__meta">›</span>
-        </button>
-        <button type="button" className="list__row" onClick={onOpenBackup}>
-          <span className="list__grow">Sauvegarde</span>
-          <span className="list__meta">›</span>
-        </button>
-      </div>
+      {/* Replié : on ouvre l'application pour jouer, pas pour régler quelque chose. */}
+      <Collapsible title="Paramètres">
+        <div className="list">
+          <button type="button" className="list__row" onClick={onOpenStats}>
+            <span className="list__grow">Statistiques</span>
+            <span className="list__meta">›</span>
+          </button>
+          <button type="button" className="list__row" onClick={onOpenAchievements}>
+            <span className="list__grow">Hauts faits</span>
+            <span className="list__meta">›</span>
+          </button>
+          <button type="button" className="list__row" onClick={onOpenRoster}>
+            <span className="list__grow">Carnet des joueurs</span>
+            <span className="list__meta">›</span>
+          </button>
+          <button type="button" className="list__row" onClick={onOpenRules}>
+            <span className="list__grow">Règles maison</span>
+            <span className="list__meta">›</span>
+          </button>
+          <button type="button" className="list__row" onClick={onOpenBackup}>
+            <span className="list__grow">Sauvegarde</span>
+            <span className="list__meta">›</span>
+          </button>
+        </div>
+      </Collapsible>
     </Screen>
   )
 }
