@@ -18,11 +18,21 @@ const CHECK_INTERVAL = 60 * 60 * 1000
 export function setupUpdates(): void {
   if (!('serviceWorker' in navigator)) return
 
-  // `controllerchange` signale qu'un service worker fraîchement installé vient de prendre
-  // le contrôle : la page tourne encore sur les anciens fichiers, il faut la relire.
+  /*
+   * `controllerchange` signale qu'un service worker vient de prendre le contrôle. Deux cas
+   * très différents se cachent derrière :
+   *
+   * - toute première visite : il n'y avait aucun contrôleur, la page a été servie par le
+   *   réseau et elle est déjà à jour — la recharger n'apporterait qu'un clignotement ;
+   * - remplacement : un ancien contrôleur cède la place, la page tourne encore sur les
+   *   anciens fichiers et doit être relue.
+   *
+   * Seul le second justifie un rechargement.
+   */
+  const hadController = navigator.serviceWorker.controller !== null
   let reloading = false
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (reloading) return
+    if (!hadController || reloading) return
     reloading = true
     window.location.reload()
   })
