@@ -58,21 +58,29 @@ function db(): Promise<IDBPDatabase<TarotDB>> {
       }
 
       if (oldVersion < 2) {
-        // Les joueurs créés avant l'existence des tags en reçoivent un ici : sans quoi ils
-        // seraient invisibles à la fusion, qui ne reconnaît les personnes que par leur tag.
+        /*
+         * Les joueurs créés avant l'existence des tags en reçoivent un ici : sans quoi ils
+         * seraient invisibles à la fusion, qui ne reconnaît les personnes que par leur tag.
+         *
+         * Parcours au curseur, sans promesse détachée : une transaction de migration se
+         * referme dès qu'on lui rend la main, et des écritures programmées dans un `.then`
+         * peuvent arriver après sa fermeture — silencieusement, et une seule fois, puisque
+         * la migration ne se rejoue jamais.
+         */
         const players = tx.objectStore('players')
-        players.getAll().then((existing) => {
-          const taken = new Set<string>()
-          for (const player of existing) {
-            if (player.tag && !taken.has(player.tag)) {
-              taken.add(player.tag)
-              continue
-            }
+        const taken = new Set<string>()
+        players.openCursor().then(function assign(cursor): unknown {
+          if (!cursor) return undefined
+          const player = cursor.value
+          if (player.tag && !taken.has(player.tag)) {
+            taken.add(player.tag)
+          } else {
             let tag = newTag()
             while (taken.has(tag)) tag = newTag()
             taken.add(tag)
-            players.put({ ...player, tag })
+            cursor.update({ ...player, tag })
           }
+          return cursor.continue().then(assign)
         })
       }
     },
