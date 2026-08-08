@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { PlayerId } from './engine/types'
 import { Achievements } from './screens/Achievements'
+import { Backup } from './screens/Backup'
 import { Game } from './screens/Game'
 import { Home } from './screens/Home'
 import { NewGame } from './screens/NewGame'
@@ -23,21 +24,25 @@ type View =
   | { name: 'stats'; game?: GameRecord; back: 'accueil' | 'partie'; celebrate?: boolean }
   | { name: 'regles' }
   | { name: 'hautsFaits' }
+  | { name: 'sauvegarde' }
 
 export function App() {
   const [rules, setRules] = useRules()
   const [view, setView] = useState<View>({ name: 'accueil' })
-  const [restored, setRestored] = useState(false)
+  /** La reprise de la partie ouverte a été tentée : on peut afficher. */
+  const [ready, setReady] = useState(false)
+  /** Une sauvegarde vient d'être restaurée : l'état en mémoire est périmé. */
+  const [justRestored, setJustRestored] = useState(false)
 
   // Reprise de la partie ouverte : rouvrir l'app doit ramener là où on en était.
   useEffect(() => {
     getCurrentGame().then((game) => {
       if (game) setView({ name: 'partie', game })
-      setRestored(true)
+      setReady(true)
     })
   }, [])
 
-  if (!rules || !restored) return null
+  if (!rules || !ready) return null
 
   switch (view.name) {
     case 'nouvelle':
@@ -86,6 +91,19 @@ export function App() {
     case 'hautsFaits':
       return <Achievements onClose={() => setView({ name: 'accueil' })} />
 
+    case 'sauvegarde':
+      return (
+        <Backup
+          onRestored={() => setJustRestored(true)}
+          onClose={() => {
+            // Après une restauration, barèmes, carnet et parties ont tous changé sous
+            // l'application : un rechargement complet évite d'en oublier un.
+            if (justRestored) window.location.reload()
+            else setView({ name: 'accueil' })
+          }}
+        />
+      )
+
     default:
       return (
         <Home
@@ -94,6 +112,7 @@ export function App() {
           onOpenStats={() => setView({ name: 'stats', back: 'accueil' })}
           onOpenAchievements={() => setView({ name: 'hautsFaits' })}
           onOpenRules={() => setView({ name: 'regles' })}
+          onOpenBackup={() => setView({ name: 'sauvegarde' })}
         />
       )
   }

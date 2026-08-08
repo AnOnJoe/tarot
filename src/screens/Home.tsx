@@ -27,6 +27,7 @@ interface HomeProps {
   onOpenStats: () => void
   onOpenAchievements: () => void
   onOpenRules: () => void
+  onOpenBackup: () => void
 }
 
 const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', {
@@ -41,6 +42,7 @@ export function Home({
   onOpenStats,
   onOpenAchievements,
   onOpenRules,
+  onOpenBackup,
 }: HomeProps) {
   const [summaries, setSummaries] = useState<GameSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -162,6 +164,10 @@ export function Home({
         </button>
         <button type="button" className="list__row" onClick={onOpenRules}>
           <span className="list__grow">Règles maison</span>
+          <span className="list__meta">›</span>
+        </button>
+        <button type="button" className="list__row" onClick={onOpenBackup}>
+          <span className="list__grow">Sauvegarde</span>
           <span className="list__meta">›</span>
         </button>
       </div>

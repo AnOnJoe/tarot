@@ -93,5 +93,9 @@ production.
 
 - **Pas de retour haptique** : Safari sur iOS n'implémente pas `navigator.vibrate`.
 - **Pas de synchronisation** entre appareils. Chaque iPhone garde ses propres parties ;
-  l'export JSON/CSV tient lieu de sauvegarde.
-- **Pas de photos dans l'export** : elles restent sur l'appareil, jamais envoyées nulle part.
+  l'écran **Sauvegarde** exporte un JSON complet — noms, **photos comprises**, parties,
+  donnes et barèmes — et sait le restaurer sur n'importe quel appareil. La restauration
+  **remplace** le contenu local : deux appareils qui ont divergé n'ont pas de
+  réconciliation évidente, et une fusion silencieuse créerait des doublons.
+- **Rien n'est envoyé sur Internet** : le fichier de sauvegarde part là où vous l'envoyez,
+  et nulle part ailleurs.

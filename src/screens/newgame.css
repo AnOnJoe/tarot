@@ -81,6 +81,13 @@
   cursor: pointer;
 }
 
+.addPlayer__error {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--neg);
+}
+
 .addPlayer__placeholder {
   display: flex;
   align-items: center;

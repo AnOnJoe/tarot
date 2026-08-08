@@ -34,6 +34,7 @@ export function NewGame({ onCancel, onStart }: NewGameProps) {
   const [firstDealer, setFirstDealer] = useState(0)
   const [newName, setNewName] = useState('')
   const [photo, setPhoto] = useState<Blob | null>(null)
+  const [photoError, setPhotoError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   const toggle = (id: PlayerId) => {
@@ -63,7 +64,15 @@ export function NewGame({ onCancel, onStart }: NewGameProps) {
 
   const pickPhoto = async (file: File | undefined) => {
     if (!file) return
-    setPhoto(await preparePhoto(file))
+    setPhotoError(null)
+    try {
+      setPhoto(await preparePhoto(file))
+    } catch {
+      // Format exotique, fichier tronqué, HEIC que le navigateur refuse de décoder : mieux
+      // vaut le dire que laisser un emplacement vide sans explication.
+      setPhoto(null)
+      setPhotoError("Cette image n'a pas pu être lue. Essayez une autre photo.")
+    }
   }
 
   const remove = async (player: Player) => {
@@ -162,6 +171,7 @@ export function NewGame({ onCancel, onStart }: NewGameProps) {
           Ajouter
         </Button>
       </div>
+      {photoError && <p className="addPlayer__error">{photoError}</p>}
 
       {ordered.length > 0 && (
         <>

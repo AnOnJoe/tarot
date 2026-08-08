@@ -1,9 +1,24 @@
 import { CONTRACT_LABELS, formatPoints } from '../engine/rules'
 import type { Deal } from '../engine/types'
-import { listAllDeals, listGames, listPlayers, loadRules } from './db'
+import {
+  BACKUP_VERSION,
+  fromBackupPlayers,
+  parseBackup,
+  summarize,
+  toBackupPlayers,
+  type Backup,
+  type BackupSummary,
+} from './backup'
+import { listAllDeals, listGames, listPlayers, loadRules, replaceAll } from './db'
 
-/** Sauvegarde complète : joueurs, parties, donnes et barèmes, sans les photos. */
-async function buildExport() {
+/**
+ * Sauvegarde complète : joueurs, photos comprises, parties, donnes et barèmes.
+ *
+ * Les photos sont converties en texte pour tenir dans le JSON. Un carnet de huit joueurs
+ * pèse ainsi quelques centaines de kilo-octets — négligeable, et le fichier reste seul
+ * nécessaire pour tout retrouver.
+ */
+async function buildBackup(): Promise<Backup> {
   const [players, games, deals, rules] = await Promise.all([
     listPlayers(),
     listGames(),
@@ -12,15 +27,9 @@ async function buildExport() {
   ])
   return {
     application: 'tarot',
-    version: 1,
+    version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
-    // Les photos sont des Blobs : on les laisse de côté pour garder un fichier lisible.
-    players: players.map(({ id, name, colorIndex, createdAt }) => ({
-      id,
-      name,
-      colorIndex,
-      createdAt,
-    })),
+    players: await toBackupPlayers(players),
     games,
     deals,
     rules,
@@ -50,20 +59,19 @@ function toCsv(deals: Deal[], names: Map<string, string>): string {
 }
 
 /**
- * Propose le partage de la sauvegarde.
+ * Propose le partage de la sauvegarde : le JSON, qui permet de tout restaurer, et un CSV
+ * lisible dans un tableur.
  *
  * La feuille de partage iOS n'accepte des fichiers que si le navigateur le permet ; à
  * défaut on retombe sur un téléchargement, qui atterrit dans l'app Fichiers.
  */
 export async function exportEverything(): Promise<void> {
-  const data = await buildExport()
+  const data = await buildBackup()
   const names = new Map(data.players.map((p) => [p.id, p.name]))
-  const stamp = new Date().toISOString().slice(0, 10)
+  const stamp = data.exportedAt.slice(0, 10)
 
   const files = [
-    new File([JSON.stringify(data, null, 2)], `tarot-${stamp}.json`, {
-      type: 'application/json',
-    }),
+    new File([JSON.stringify(data)], `tarot-${stamp}.json`, { type: 'application/json' }),
     new File([toCsv(data.deals, names)], `tarot-${stamp}.csv`, { type: 'text/csv' }),
   ]
 
@@ -85,4 +93,24 @@ export async function exportEverything(): Promise<void> {
     link.click()
     URL.revokeObjectURL(url)
   }
+}
+
+/**
+ * Restaure une sauvegarde, en remplaçant intégralement le contenu de l'appareil.
+ *
+ * Le remplacement plutôt que la fusion : deux appareils qui ont divergé n'ont pas de
+ * réconciliation évidente, et une fusion silencieuse produirait des parties en double ou
+ * des donnes orphelines. Restaurer, c'est revenir à l'état du fichier — ce que l'écran
+ * annonce avant de le faire.
+ */
+export async function importBackup(file: File): Promise<BackupSummary> {
+  const backup = parseBackup(await file.text())
+  const players = await fromBackupPlayers(backup.players)
+  await replaceAll({
+    players,
+    games: backup.games,
+    deals: backup.deals,
+    rules: backup.rules,
+  })
+  return summarize(backup)
 }

@@ -206,3 +206,39 @@ export async function saveRules(rules: RuleSet): Promise<void> {
 export async function resetRules(): Promise<void> {
   await (await db()).delete('settings', 'rules')
 }
+
+/* ------------------------------------------------------------- restauration */
+
+/**
+ * Remplace intégralement le contenu de la base par celui d'une sauvegarde.
+ *
+ * Tout se joue dans une seule transaction : si l'écriture échoue en chemin, rien n'est
+ * appliqué et l'appareil garde ses parties — plutôt qu'un carnet à moitié restauré.
+ */
+export async function replaceAll(data: {
+  players: Player[]
+  games: Game[]
+  deals: Deal[]
+  rules: RuleSet
+}): Promise<void> {
+  const database = await db()
+  const tx = database.transaction(['players', 'games', 'deals', 'settings'], 'readwrite')
+
+  await Promise.all([
+    tx.objectStore('players').clear(),
+    tx.objectStore('games').clear(),
+    tx.objectStore('deals').clear(),
+  ])
+
+  await Promise.all([
+    ...data.players.map((player) => tx.objectStore('players').put(player)),
+    ...data.games.map((game) => tx.objectStore('games').put(game)),
+    ...data.deals.map((deal) => tx.objectStore('deals').put(deal)),
+    tx.objectStore('settings').put(data.rules, 'rules'),
+    // Le pointeur de reprise appartient à cet appareil, pas à la sauvegarde : une partie
+    // restée ouverte se retrouve sur l'accueil, sans s'ouvrir d'autorité au lancement.
+    tx.objectStore('settings').delete('currentGameId'),
+  ])
+
+  await tx.done
+}

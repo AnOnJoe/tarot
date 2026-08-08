@@ -1,0 +1,83 @@
+.backup__counts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 16px 10px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.backup__count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.backup__countValue {
+  font-size: 24px;
+}
+
+.backup__countLabel {
+  font-size: 10.5px;
+  text-align: center;
+  color: var(--ink-faint);
+}
+
+.backup__note {
+  margin-bottom: 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.backup__note strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Le champ de fichier est masqué : c'est le bouton qui porte l'action. */
+.backup__action {
+  display: flex;
+}
+
+.backup__action .btn {
+  cursor: pointer;
+}
+
+.backup__action input {
+  display: none;
+}
+
+.backup__error {
+  margin-top: 12px;
+  padding: 13px 15px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--neg) 16%, transparent);
+  color: var(--neg);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.backup__done {
+  margin-top: 12px;
+  padding: 15px 16px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.backup__doneTitle {
+  margin-bottom: 3px;
+  font-size: 15.5px;
+  font-weight: 660;
+  color: var(--ink);
+}
+
+.backup__doneDate {
+  margin-top: 5px;
+  color: var(--ink-faint);
+}
