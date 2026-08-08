@@ -15,17 +15,12 @@ interface PointSliderProps {
 }
 
 /**
- * Le curseur de la donne : la piste est le partage des 91 points, et le pouce en est la
- * frontière. La défense occupe la gauche, l'attaque la droite — comme les deux camps
- * assis de part et d'autre de la table.
+ * Le curseur de la donne : une barre de progression de l'attaque vers son contrat.
  *
- * La piste est donc en sens inverse (`direction: rtl` sur le champ) : quand l'attaque
- * gagne des points, la frontière recule vers la gauche et son territoire s'étend. Le
- * bouton « + », placé du côté de l'attaque, lui ajoute des points ; le « − », côté
- * défense, lui en retire.
- *
- * L'encoche marque le contrat à réaliser et se déplace avec le nombre de bouts : c'est
- * elle qui rend la marge ou la chute lisible d'un coup d'œil.
+ * Glisser vers la droite augmente les points du preneur, et le pouce se rapproche de son
+ * portrait, à droite. L'encoche marque le contrat à réaliser et se déplace avec le nombre
+ * de bouts : la franchir, c'est réussir. Le bouton « + » se trouve du côté du preneur, le
+ * « − » du côté de la défense.
  */
 export function PointSlider({
   value,
@@ -40,9 +35,9 @@ export function PointSlider({
   const diff = value - threshold
   const success = diff >= 0
 
-  // Position mesurée depuis la gauche : la frontière laisse la défense à sa gauche.
-  const boundary = defensePoints / TOTAL_POINTS
-  const thresholdBoundary = (TOTAL_POINTS - threshold) / TOTAL_POINTS
+  // Progression de l'attaque, mesurée depuis la gauche.
+  const progress = value / TOTAL_POINTS
+  const thresholdRatio = threshold / TOTAL_POINTS
 
   const step = (delta: number) => {
     const next = Math.min(TOTAL_POINTS, Math.max(0, value + delta))
@@ -86,12 +81,12 @@ export function PointSlider({
         </button>
 
         <div className="slider__track" data-dragging={dragging || undefined}>
-          {/* Territoire de l'attaque : de la frontière jusqu'au bord droit. */}
-          <div className="slider__fill" style={{ left: `${boundary * 100}%` }} />
+          {/* Points marqués par l'attaque, du bord gauche jusqu'au pouce. */}
+          <div className="slider__fill" style={{ width: `${progress * 100}%` }} />
           <div
             className="slider__notch"
             style={{
-              left: `calc(var(--thumb) / 2 + (100% - var(--thumb)) * ${thresholdBoundary})`,
+              left: `calc(var(--thumb) / 2 + (100% - var(--thumb)) * ${thresholdRatio})`,
             }}
           >
             <span className="slider__notchLabel num">{threshold}</span>

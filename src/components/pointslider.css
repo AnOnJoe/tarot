@@ -71,11 +71,11 @@
   background: var(--surface-2);
 }
 
-/* Territoire de l'attaque : depuis la frontière jusqu'au bord droit. */
+/* Points marqués par l'attaque, du bord gauche jusqu'au pouce. */
 .slider__fill {
   position: absolute;
   top: 0;
-  right: 0;
+  left: 0;
   bottom: 0;
   border-radius: 99px;
   background: color-mix(in srgb, var(--accent-live) 36%, transparent);
@@ -104,10 +104,7 @@
   color: var(--ink-soft);
 }
 
-/*
- * Piste inversée : le minimum se trouve à droite. Quand l'attaque marque, la frontière
- * recule vers la gauche et son territoire s'étend — le geste suit la logique du jeu.
- */
+/* Sens naturel : glisser vers la droite augmente les points du preneur. */
 .slider__input {
   position: absolute;
   inset: 0;
@@ -116,7 +113,6 @@
   margin: 0;
   background: none;
   appearance: none;
-  direction: rtl;
   cursor: grab;
 }
 
