@@ -25,6 +25,7 @@ interface HomeProps {
   onResume: (game: Game) => void
   onNewGame: () => void
   onOpenStats: () => void
+  onOpenAchievements: () => void
   onOpenRules: () => void
 }
 
@@ -34,7 +35,13 @@ const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', {
   year: 'numeric',
 })
 
-export function Home({ onResume, onNewGame, onOpenStats, onOpenRules }: HomeProps) {
+export function Home({
+  onResume,
+  onNewGame,
+  onOpenStats,
+  onOpenAchievements,
+  onOpenRules,
+}: HomeProps) {
   const [summaries, setSummaries] = useState<GameSummary[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -147,6 +154,10 @@ export function Home({ onResume, onNewGame, onOpenStats, onOpenRules }: HomeProp
       <div className="list">
         <button type="button" className="list__row" onClick={onOpenStats}>
           <span className="list__grow">Statistiques</span>
+          <span className="list__meta">›</span>
+        </button>
+        <button type="button" className="list__row" onClick={onOpenAchievements}>
+          <span className="list__grow">Hauts faits</span>
           <span className="list__meta">›</span>
         </button>
         <button type="button" className="list__row" onClick={onOpenRules}>

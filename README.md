@@ -66,7 +66,7 @@ réellement qu'une fois déployé.
 
 | | |
 |---|---|
-| `src/engine/` | Calcul des points. TypeScript pur, sans React ni DOM, couvert par 45 tests |
+| `src/engine/` | Calcul des points et hauts faits. TypeScript pur, sans React ni DOM, couvert par 62 tests |
 | `src/store/` | Persistance IndexedDB (joueurs, parties, donnes, barèmes) et export |
 | `src/screens/` | Les six écrans de l'application |
 | `src/components/` | Portraits, tableau de scores, curseur de points, graphiques SVG |
@@ -75,6 +75,13 @@ réellement qu'une fois déployé.
 Le moteur est isolé à dessein : c'est la seule partie qui doit être irréprochable, et il
 resterait portable tel quel si une version native voyait le jour. Un test vérifie sur
 900 donnes générées que **la somme des scores d'une donne vaut toujours zéro**.
+
+### Hauts faits
+
+Onze exploits propres au tarot — chelem, garde contre tenue, contrat au point près, triple
+poignée, remontada… Ils ne sont **pas stockés** : chacun se recalcule à partir des donnes.
+Corriger une donne saisie de travers retire donc le haut fait qu'elle avait fait décrocher,
+ce qui vaut mieux qu'un tableau de chasse qui mentirait.
 
 ## Déploiement
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { PlayerId } from './engine/types'
+import { Achievements } from './screens/Achievements'
 import { Game } from './screens/Game'
 import { Home } from './screens/Home'
 import { NewGame } from './screens/NewGame'
@@ -21,6 +22,7 @@ type View =
   /** `back` distingue le retour au tableau du retour à l'accueil après une partie close. */
   | { name: 'stats'; game?: GameRecord; back: 'accueil' | 'partie'; celebrate?: boolean }
   | { name: 'regles' }
+  | { name: 'hautsFaits' }
 
 export function App() {
   const [rules, setRules] = useRules()
@@ -81,12 +83,16 @@ export function App() {
     case 'regles':
       return <Rules rules={rules} onChange={setRules} onClose={() => setView({ name: 'accueil' })} />
 
+    case 'hautsFaits':
+      return <Achievements onClose={() => setView({ name: 'accueil' })} />
+
     default:
       return (
         <Home
           onResume={(game) => setView({ name: 'partie', game })}
           onNewGame={() => setView({ name: 'nouvelle' })}
           onOpenStats={() => setView({ name: 'stats', back: 'accueil' })}
+          onOpenAchievements={() => setView({ name: 'hautsFaits' })}
           onOpenRules={() => setView({ name: 'regles' })}
         />
       )

@@ -3,6 +3,7 @@ import { formatPoints, formatSigned } from '../engine/rules'
 import { dealStats, playerStats, type PlayerStats } from '../engine/stats'
 import type { Deal, PlayerId } from '../engine/types'
 import { Avatar } from '../components/Avatar'
+import { Confetti } from '../components/Confetti'
 import { BalanceChart, DealSplitChart, TakeSuccessChart } from '../components/charts/BarCharts'
 import { CumulativeChart } from '../components/charts/CumulativeChart'
 import { Button, Chip, EmptyState, Screen, TopAction } from '../components/ui'
@@ -191,6 +192,7 @@ function WinnerBanner({
 
   return (
     <div className="winner">
+      <Confetti />
       <span className="winner__label">Partie terminée</span>
       <Avatar player={player} size={72} highlighted />
       <p className="winner__name">{player.name} l'emporte</p>

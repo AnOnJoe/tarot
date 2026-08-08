@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import { dealHighlights } from '../engine/achievements'
+import { contractBreakdown, scoreDeal } from '../engine/score'
 import type { ContractDeal, Deal, DealInput, PlayerId, RuleSet } from '../engine/types'
+import { DealReveal, type RevealData } from '../components/DealReveal'
 import { ScoreTable } from '../components/ScoreTable'
 import { Button, EmptyState, Screen, TopAction } from '../components/ui'
 import type { Game as GameRecord } from '../store/db'
@@ -26,16 +29,50 @@ type Mode =
  * Écran de partie : le tableau des donnes, et le point d'entrée vers la saisie.
  * Prendre la donne se fait depuis le « + » sous le portrait du preneur.
  */
+/** Joueur en tête, ou `null` si personne ne se détache. */
+function leaderOf(totals: Record<PlayerId, number>): PlayerId | null {
+  const entries = Object.entries(totals)
+  if (entries.length === 0) return null
+  const best = entries.reduce((a, b) => (b[1] > a[1] ? b : a))
+  const tied = entries.filter(([, value]) => value === best[1])
+  return tied.length > 1 ? null : best[0]
+}
+
 export function Game({ game, rules, onExit, onEnd, onOpenStats }: GameProps) {
   const state = useGame(game, rules)
   const [mode, setMode] = useState<Mode>({ view: 'table' })
+  const [reveal, setReveal] = useState<RevealData | null>(null)
 
   const backToTable = () => setMode({ view: 'table' })
 
   const save = async (input: DealInput, editing?: Deal) => {
-    if (editing) await state.editDeal(editing.id, input)
-    else await state.addDeal(input)
+    if (editing) {
+      // Une correction n'est pas un moment de jeu : on la passe sans mise en scène.
+      await state.editDeal(editing.id, input)
+      backToTable()
+      return
+    }
+
+    // Les scores sont recalculés ici pour connaître le nouveau meneur avant que la donne
+    // ne soit relue depuis la base — la révélation doit s'afficher sans attendre l'écriture.
+    const scores = scoreDeal(input, game.playerIds, rules)
+    const nextTotals: Record<PlayerId, number> = {}
+    for (const id of game.playerIds) {
+      nextTotals[id] = (state.totals[id] ?? 0) + (scores[id] ?? 0)
+    }
+
+    await state.addDeal(input)
     backToTable()
+
+    setReveal({
+      contract: input.kind === 'vachette' ? 'vachette' : input.contract,
+      takerId: input.kind === 'vachette' ? null : input.takerId,
+      diff: input.kind === 'vachette' ? null : contractBreakdown(input, rules).diff,
+      scores,
+      feats: dealHighlights(input, rules),
+      previousLeaderId: leaderOf(state.totals),
+      leaderId: leaderOf(nextTotals),
+    })
   }
 
   const remove = async (editing: Deal) => {
@@ -127,6 +164,14 @@ export function Game({ game, rules, onExit, onEnd, onOpenStats }: GameProps) {
             Touchez le joueur qui a pris pour saisir la donne. Le liseré indique qui donne.
           </p>
         </EmptyState>
+      )}
+
+      {reveal && (
+        <DealReveal
+          data={reveal}
+          players={state.players}
+          onDone={() => setReveal(null)}
+        />
       )}
     </Screen>
   )
