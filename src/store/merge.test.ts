@@ -110,7 +110,34 @@ describe('fusion de deux carnets', () => {
     expect(Object.keys(merged.scores).sort()).toEqual(['local-a', 'local-b'])
   })
 
-  it('réécrit aussi les points d’une vachette', () => {
+  it('réécrit aussi le classement d’une vachette', () => {
+    const local: Dataset = { players: [player('local-a', 'AAA-111')], games: [], deals: [] }
+    const incoming: Dataset = {
+      players: [player('far-a', 'AAA-111')],
+      games: [game('g1', ['far-a'])],
+      deals: [
+        {
+          id: 'v1',
+          gameId: 'g1',
+          index: 0,
+          dealerId: 'far-a',
+          input: { kind: 'vachette', ranks: { 'far-a': 1 } },
+          scores: { 'far-a': 0 },
+          createdAt: 1,
+        },
+      ],
+    }
+    const { dataset } = mergeDatasets(local, incoming)
+    const input = dataset.deals[0].input
+    expect(input.kind).toBe('vachette')
+    if (input.kind === 'vachette') expect(Object.keys(input.ranks ?? {})).toEqual(['local-a'])
+  })
+
+  /*
+   * Un carnet resté sur une version antérieure envoie encore des vachettes en points : la
+   * fusion doit les réécrire aussi, sans quoi la donne reçue désignerait un joueur inconnu.
+   */
+  it('réécrit une vachette reçue à l’ancien format', () => {
     const local: Dataset = { players: [player('local-a', 'AAA-111')], games: [], deals: [] }
     const incoming: Dataset = {
       players: [player('far-a', 'AAA-111')],
@@ -129,8 +156,10 @@ describe('fusion de deux carnets', () => {
     }
     const { dataset } = mergeDatasets(local, incoming)
     const input = dataset.deals[0].input
-    expect(input.kind).toBe('vachette')
-    if (input.kind === 'vachette') expect(Object.keys(input.points)).toEqual(['local-a'])
+    if (input.kind === 'vachette') {
+      expect(Object.keys(input.points ?? {})).toEqual(['local-a'])
+      expect(input.ranks).toBeUndefined()
+    }
   })
 
   it('n’écrase jamais une donnée locale déjà présente', () => {

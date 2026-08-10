@@ -5,9 +5,10 @@ import {
   cumulative,
   cumulativeSeries,
   maxHandful,
+  ranksFromGroups,
   scoreDeal,
   scoreVachette,
-  vacheePointsRemaining,
+  vacheeGroups,
 } from './score'
 import type { ContractDeal, Contract, Oudlers, PlayerId, SlamState } from './types'
 
@@ -234,9 +235,9 @@ describe('misères', () => {
 })
 
 describe('vachette', () => {
-  it('à 4 joueurs, celui qui ramasse le plus de points perd le plus', () => {
+  it('à 4 joueurs, le premier du classement perd le plus', () => {
     const scores = scoreVachette(
-      { kind: 'vachette', points: { a: 30, b: 25, c: 20, d: 16 } },
+      { kind: 'vachette', ranks: { a: 1, b: 2, c: 3, d: 4 } },
       P4,
     )
     expect(scores).toEqual({ a: -120, b: -60, c: 60, d: 120 })
@@ -244,24 +245,21 @@ describe('vachette', () => {
   })
 
   it('à 3 joueurs, le joueur médian ne marque rien', () => {
-    const scores = scoreVachette(
-      { kind: 'vachette', points: { a: 40, b: 31, c: 20 } },
-      P3,
-    )
+    const scores = scoreVachette({ kind: 'vachette', ranks: { a: 1, b: 2, c: 3 } }, P3)
     expect(scores).toEqual({ a: -120, b: 0, c: 120 })
   })
 
   it('à 5 joueurs, le barème est symétrique', () => {
     const scores = scoreVachette(
-      { kind: 'vachette', points: { a: 30, b: 25, c: 18, d: 12, e: 6 } },
+      { kind: 'vachette', ranks: { a: 1, b: 2, c: 3, d: 4, e: 5 } },
       P5,
     )
     expect(scores).toEqual({ a: -120, b: -60, c: 0, d: 60, e: 120 })
   })
 
-  it('partage la moyenne des rangs en cas d\'égalité', () => {
+  it('partage la moyenne des rangs entre ex æquo', () => {
     const scores = scoreVachette(
-      { kind: 'vachette', points: { a: 30, b: 30, c: 20, d: 11 } },
+      { kind: 'vachette', ranks: { a: 1, b: 1, c: 3, d: 4 } },
       P4,
     )
     expect(scores).toEqual({ a: -90, b: -90, c: 60, d: 120 })
@@ -270,22 +268,48 @@ describe('vachette', () => {
 
   it('annule la donne quand tout le monde est à égalité', () => {
     const scores = scoreVachette(
-      { kind: 'vachette', points: { a: 22.75, b: 22.75, c: 22.75, d: 22.75 } },
+      { kind: 'vachette', ranks: { a: 1, b: 1, c: 1, d: 1 } },
       P4,
     )
     expect(scores).toEqual({ a: 0, b: 0, c: 0, d: 0 })
   })
 
-  it('signale les points manquants dans une saisie incomplète', () => {
+  /*
+   * Seul l'ordre des rangs compte, pas leur numérotation : la table dit « premier,
+   * deuxièmes ex æquo, quatrième », mais une saisie qui numéroterait 1,2,2,3 décrit le
+   * même classement et doit donner les mêmes scores.
+   */
+  it('ne dépend que de l’ordre des rangs, pas de leur numérotation', () => {
+    const sportive = scoreVachette({ kind: 'vachette', ranks: { a: 1, b: 2, c: 2, d: 4 } }, P4)
+    const dense = scoreVachette({ kind: 'vachette', ranks: { a: 1, b: 2, c: 2, d: 3 } }, P4)
+    expect(dense).toEqual(sportive)
+    expect(sportive).toEqual({ a: -120, b: 0, c: 0, d: 120 })
+  })
+
+  it('relit les donnes enregistrées en points, sans les recalculer autrement', () => {
+    // Format d'avant : les points servaient uniquement à retrouver cet ordre.
+    expect(scoreVachette({ kind: 'vachette', points: { a: 30, b: 25, c: 20, d: 16 } }, P4)).toEqual(
+      { a: -120, b: -60, c: 60, d: 120 },
+    )
+    expect(scoreVachette({ kind: 'vachette', points: { a: 30, b: 30, c: 20, d: 11 } }, P4)).toEqual(
+      { a: -90, b: -90, c: 60, d: 120 },
+    )
+  })
+
+  it('regroupe les ex æquo, rangs comme points', () => {
+    expect(vacheeGroups({ kind: 'vachette', ranks: { a: 1, b: 2, c: 2, d: 4 } }, P4)).toEqual([
+      ['a'],
+      ['b', 'c'],
+      ['d'],
+    ])
     expect(
-      vacheePointsRemaining({ kind: 'vachette', points: { a: 30, b: 25 } }, P4),
-    ).toBe(36)
-    expect(
-      vacheePointsRemaining(
-        { kind: 'vachette', points: { a: 30, b: 25, c: 20, d: 16 } },
-        P4,
-      ),
-    ).toBe(0)
+      vacheeGroups({ kind: 'vachette', points: { a: 30, b: 25, c: 25, d: 11 } }, P4),
+    ).toEqual([['a'], ['b', 'c'], ['d']])
+  })
+
+  it('numérote les rangs à la façon sportive', () => {
+    expect(ranksFromGroups([['a'], ['b', 'c'], ['d']])).toEqual({ a: 1, b: 2, c: 2, d: 4 })
+    expect(ranksFromGroups([['a', 'b', 'c']])).toEqual({ a: 1, b: 1, c: 1 })
   })
 })
 
@@ -363,8 +387,19 @@ describe('invariant : une donne ne crée ni ne détruit de points', () => {
     const random = makeRandom(42)
     for (let i = 0; i < 300; i++) {
       const players = [P3, P4, P5][Math.floor(random() * 3)]
+      const ranks: Record<PlayerId, number> = {}
+      // Peu de rangs distincts : les ex æquo sont volontairement fréquents.
+      for (const id of players) ranks[id] = 1 + Math.floor(random() * 3)
+      const scores = scoreVachette({ kind: 'vachette', ranks }, players)
+      expect(Math.abs(sum(scores))).toBeLessThan(1e-9)
+    }
+  })
+
+  it('vaut encore pour les vachettes enregistrées en points', () => {
+    const random = makeRandom(1789)
+    for (let i = 0; i < 300; i++) {
+      const players = [P3, P4, P5][Math.floor(random() * 3)]
       const points: Record<PlayerId, number> = {}
-      // Peu de valeurs distinctes : les égalités sont volontairement fréquentes.
       for (const id of players) points[id] = Math.floor(random() * 4) * 10
       const scores = scoreVachette({ kind: 'vachette', points }, players)
       expect(Math.abs(sum(scores))).toBeLessThan(1e-9)

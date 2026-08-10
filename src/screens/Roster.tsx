@@ -4,12 +4,15 @@ import { playerRecord, playerStats } from '../engine/stats'
 import { TAG_HINT, isValidTag, normalizeTag } from '../engine/tag'
 import type { Contract, Deal } from '../engine/types'
 import { Avatar } from '../components/Avatar'
+import { CumulativeChart } from '../components/charts/CumulativeChart'
 import { Button, Eyebrow, Screen, Sheet, TopAction } from '../components/ui'
 import {
   createPlayer,
   deletePlayer,
   listAllDeals,
+  listGames,
   updatePlayer,
+  type Game,
   type Player,
 } from '../store/db'
 import { usePlayers } from '../store/hooks'
@@ -33,9 +36,12 @@ export function Roster({ onClose }: RosterProps) {
   const [creating, setCreating] = useState(false)
   // Chargées une fois pour tout le carnet : ouvrir une fiche ne doit pas relire la base.
   const [deals, setDeals] = useState<Deal[]>([])
+  const [games, setGames] = useState<Game[]>([])
 
   useEffect(() => {
     listAllDeals().then(setDeals)
+    // De la plus ancienne à la plus récente : l'axe du temps se lit vers la droite.
+    listGames().then((loaded) => setGames([...loaded].sort((a, b) => a.startedAt - b.startedAt)))
   }, [])
 
   return (
@@ -77,6 +83,7 @@ export function Roster({ onClose }: RosterProps) {
           player={editing}
           existing={players}
           deals={deals}
+          games={games}
           onDone={async () => {
             setEditing(null)
             setCreating(false)
@@ -97,12 +104,14 @@ function PlayerEditor({
   player,
   existing,
   deals,
+  games,
   onDone,
   onCancel,
 }: {
   player: Player | null
   existing: Player[]
   deals: Deal[]
+  games: Game[]
   onDone: () => void
   onCancel: () => void
 }) {
@@ -212,7 +221,7 @@ function PlayerEditor({
 
       {error && <p className="editor__error">{error}</p>}
 
-      {player && <PlayerFigures player={player} deals={deals} />}
+      {player && <PlayerFigures player={player} deals={deals} games={games} />}
 
       <Button variant="primary" onClick={save} disabled={busy}>
         {player ? 'Enregistrer' : 'Ajouter'}
@@ -236,14 +245,39 @@ function PlayerEditor({
  * eux, ici on regarde une personne. Ce sont deux questions différentes, et la seconde
  * n'avait pas de réponse.
  */
-function PlayerFigures({ player, deals }: { player: Player; deals: Deal[] }) {
-  const { stats, record, favourite } = useMemo(() => {
-    const [stats] = playerStats(deals, [player.id])
-    const record = playerRecord(deals, player.id)
+function PlayerFigures({
+  player,
+  deals,
+  games,
+}: {
+  player: Player
+  deals: Deal[]
+  games: Game[]
+}) {
+  const { stats, record, favourite, groups } = useMemo(() => {
+    const mine = deals.filter((deal) => deal.scores[player.id] !== undefined)
+    const [stats] = playerStats(mine, [player.id])
+    const record = playerRecord(mine, player.id)
     const entries = Object.entries(stats.contracts) as [Contract, number][]
     const best = entries.reduce((a, b) => (b[1] > a[1] ? b : a), entries[0])
-    return { stats, record, favourite: best && best[1] > 0 ? best : null }
-  }, [deals, player.id])
+
+    /*
+     * Un point par partie où il a joué, dans l'ordre chronologique. Les parties des autres
+     * n'ont pas de place sur l'axe : elles créeraient des paliers plats étrangers à ce
+     * joueur.
+     */
+    const byGame = new Map<string, Deal[]>()
+    for (const deal of mine) {
+      const group = byGame.get(deal.gameId)
+      if (group) group.push(deal)
+      else byGame.set(deal.gameId, [deal])
+    }
+    const groups = games
+      .filter((game) => byGame.has(game.id))
+      .map((game, index) => ({ label: `partie ${index + 1}`, deals: byGame.get(game.id)! }))
+
+    return { stats, record, favourite: best && best[1] > 0 ? best : null, groups }
+  }, [deals, games, player.id])
 
   if (stats.dealsPlayed === 0) {
     return (
@@ -288,6 +322,18 @@ function PlayerFigures({ player, deals }: { player: Player; deals: Deal[] }) {
           </>
         )}
       </p>
+
+      {/* À partir de deux parties seulement : un point unique trace une ligne plate qui ne
+          raconte rien, et occuperait la place d'une information. */}
+      {groups.length > 1 && (
+        <CumulativeChart
+          players={[player]}
+          deals={deals}
+          groups={groups}
+          caption="Évolution de partie en partie"
+          unitLabel="partie"
+        />
+      )}
     </>
   )
 }

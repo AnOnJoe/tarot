@@ -68,11 +68,29 @@ export interface ContractDeal {
   miseries: Misery[]
 }
 
-/** Une donne jouée en vachette : chacun pour soi, classement par points. */
+/**
+ * Une donne jouée en vachette : chacun pour soi, et **seul l'ordre compte**.
+ *
+ * Le barème ne dépend que du classement : compter les points de chacun était un détour
+ * pour retrouver un ordre que la table connaît déjà en regardant ses plis.
+ */
 export interface VacheeDeal {
   kind: 'vachette'
-  /** Points réalisés par chaque joueur ; la somme doit valoir 91. */
-  points: Record<PlayerId, number>
+  /**
+   * Rang de chacun. **1 = celui qui a ramassé le plus de points**, donc le plus grand
+   * perdant. Les ex æquo portent le même rang.
+   *
+   * Seul l'ordre des valeurs importe, pas leur numérotation : `1,2,2,4` et `1,2,2,3`
+   * décrivent le même classement.
+   */
+  ranks?: Record<PlayerId, number>
+  /**
+   * Points ramassés, tels que les versions antérieures les saisissaient.
+   *
+   * Encore lu — les donnes déjà enregistrées n'ont que cela, et une donne validée ne se
+   * recalcule jamais — mais plus jamais écrit.
+   */
+  points?: Record<PlayerId, number>
 }
 
 export type DealInput = ContractDeal | VacheeDeal

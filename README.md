@@ -56,7 +56,7 @@ recharge si une nouvelle version est en ligne.
 | **Nouvelle partie** | Composer la table et désigner le premier donneur |
 | **Partie** | Le tableau des donnes, les cumuls, le rang de chacun |
 | **Saisie d'une donne** | Preneur, contrat, bouts, annonces, curseur de points, détail du calcul |
-| **Vachette** | Saisie du contrat maison : les points de chacun, qui doivent totaliser 91 |
+| **Vachette** | Saisie du contrat maison : le **classement**, du plus de points au moins de points, ex æquo compris |
 | **Table** | Corriger l'ordre des joueurs en cours de partie et qui donne ensuite |
 | **Statistiques** | Courbes d'évolution, réussite des prises, bilan, attaque contre défense |
 | **Hauts faits** | Onze exploits propres au tarot, décrochés ou à décrocher |
@@ -107,7 +107,8 @@ Les barèmes ne sont pas fusionnés : ce sont des réglages d'appareil, pas de l
 
 Sa fiche, dans le *Carnet des joueurs*, porte ce qu'il a fait depuis toujours : parties
 jouées et gagnées, donnes, points cumulés, prises et taux de réussite, moyennes en attaque
-et en défense, meilleure partie, contrat de prédilection.
+et en défense, meilleure partie, contrat de prédilection — et sa **courbe d'évolution de
+partie en partie**, à partir de deux parties jouées.
 
 Une **victoire** compte pour chacun des ex æquo : départager arbitrairement serait pire que
 d'admettre le partage. Une partie ouverte sans y jouer une seule donne ne compte pas.
@@ -146,14 +147,19 @@ générées.
 ### La vachette
 
 Contrat maison joué quand personne ne prend, au lieu de redistribuer. Chacun pour soi, et
-**celui qui ramasse le plus de points perd le plus**. Barème par rang de points décroissant :
+**celui qui ramasse le plus de points perd le plus**. Barème par rang :
 
 - 3 joueurs — `−120 / 0 / +120`
 - 4 joueurs — `−120 / −60 / +60 / +120`
 - 5 joueurs — `−120 / −60 / 0 / +60 / +120`
 
-En cas d'égalité, les joueurs concernés se partagent la moyenne des rangs qu'ils occupent,
-ce qui préserve la somme nulle.
+**Seul l'ordre compte, pas les points.** On touche les joueurs du plus de points au moins de
+points ; le `=` met quelqu'un à égalité avec celui du dessus. Compter les points de chacun
+n'était qu'un détour pour retrouver un ordre que la table lit dans ses plis.
+
+En cas d'égalité, les ex æquo se partagent la moyenne des rangs qu'ils occupent, ce qui
+préserve la somme nulle. Deux ex æquo aux rangs 2 et 3 à quatre joueurs marquent donc
+`0` chacun.
 
 ### Points entiers, cumuls à décimales
 
@@ -173,7 +179,7 @@ rendre sa taille à l'unité.
 ```sh
 npm install
 npm run dev      # serveur local
-npm test         # moteur de calcul et fusion — 102 tests
+npm test         # moteur de calcul et fusion — 107 tests
 npm run build    # production
 node scripts/make-icons.mjs   # régénère les icônes et le favicon
 ```

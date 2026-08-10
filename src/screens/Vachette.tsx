@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react'
-import { TOTAL_POINTS, formatPoints, formatSigned } from '../engine/rules'
-import { scoreVachette, vacheePointsRemaining } from '../engine/score'
+import { formatSigned } from '../engine/rules'
+import { ranksFromGroups, scoreVachette, vacheeGroups } from '../engine/score'
 import type { PlayerId, RuleSet, VacheeDeal } from '../engine/types'
 import { Avatar } from '../components/Avatar'
-import { NumberInput } from '../components/NumberInput'
 import { Button, Eyebrow, Screen, TopAction } from '../components/ui'
 import type { Player } from '../store/db'
 import './vachette.css'
@@ -18,15 +17,51 @@ interface VachetteProps {
   onDelete?: () => void
 }
 
-export function emptyVachette(players: Player[]): VacheeDeal {
-  const points: Record<PlayerId, number> = {}
-  for (const player of players) points[player.id] = 0
-  return { kind: 'vachette', points }
+/**
+ * Classement en cours de construction.
+ *
+ * `order` est la suite des joueurs déjà placés, du plus de points au moins de points.
+ * `tied[i]` dit que le joueur en position `i` est à égalité avec celui qui le précède —
+ * c'est la seule information que l'ordre seul ne sait pas porter.
+ */
+interface Draft {
+  order: PlayerId[]
+  tied: boolean[]
+}
+
+/** Groupes d'ex æquo décrits par le brouillon, tels que le barème les attend. */
+function groupsOf(draft: Draft): PlayerId[][] {
+  const groups: PlayerId[][] = []
+  draft.order.forEach((id, index) => {
+    if (index > 0 && draft.tied[index]) groups[groups.length - 1].push(id)
+    else groups.push([id])
+  })
+  return groups
+}
+
+/** Relit une donne enregistrée pour la rouvrir dans l'écran de classement. */
+function draftFrom(deal: VacheeDeal, players: Player[]): Draft {
+  const groups = vacheeGroups(
+    deal,
+    players.map((p) => p.id),
+  )
+  const order: PlayerId[] = []
+  const tied: boolean[] = []
+  for (const group of groups) {
+    group.forEach((id, index) => {
+      order.push(id)
+      tied.push(index > 0)
+    })
+  }
+  return { order, tied }
 }
 
 /**
- * Saisie d'une vachette : personne n'a pris, chacun compte ses propres points et le
- * classement fait le score. On saisit les plis de chacun, le total devant tomber sur 91.
+ * Saisie d'une vachette : personne n'a pris, et **seul le classement compte**.
+ *
+ * Rien n'est présélectionné, et l'ordre de la table n'est pas proposé comme point de
+ * départ : ce serait un classement plausible que personne n'a donné. On touche les joueurs
+ * dans l'ordre, du plus de points au moins de points, comme la table le dit à voix haute.
  */
 export function Vachette({
   players,
@@ -37,21 +72,49 @@ export function Vachette({
   onSubmit,
   onDelete,
 }: VachetteProps) {
-  const [deal, setDeal] = useState<VacheeDeal>(initial ?? emptyVachette(players))
-
-  const playerIds = players.map((p) => p.id)
-  const remaining = vacheePointsRemaining(deal, playerIds)
-  const balanced = Math.abs(remaining) < 1e-9
-
-  const scores = useMemo(
-    () => scoreVachette(deal, playerIds, rules),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [deal, players, rules],
+  const [draft, setDraft] = useState<Draft>(() =>
+    initial ? draftFrom(initial, players) : { order: [], tied: [] },
   )
 
-  const setPoints = (id: PlayerId, value: number) => {
-    setDeal((current) => ({ ...current, points: { ...current.points, [id]: value } }))
-  }
+  const remaining = players.filter((p) => !draft.order.includes(p.id))
+  const complete = remaining.length === 0
+  const groups = groupsOf(draft)
+  const ranks = ranksFromGroups(groups)
+
+  const scores = useMemo(
+    () =>
+      complete
+        ? scoreVachette(
+            { kind: 'vachette', ranks },
+            players.map((p) => p.id),
+            rules,
+          )
+        : {},
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [complete, draft, players, rules],
+  )
+
+  const place = (id: PlayerId) =>
+    setDraft((current) => ({
+      order: [...current.order, id],
+      tied: [...current.tied, false],
+    }))
+
+  /** Retire un joueur du classement : il retourne dans la réserve, l'ordre se resserre. */
+  const unplace = (index: number) =>
+    setDraft((current) => ({
+      order: current.order.filter((_, i) => i !== index),
+      tied: current.tied
+        .filter((_, i) => i !== index)
+        // Le premier ne peut être à égalité avec personne.
+        .map((value, i) => (i === 0 ? false : value)),
+    }))
+
+  const toggleTie = (index: number) =>
+    setDraft((current) => ({
+      ...current,
+      tied: current.tied.map((value, i) => (i === index ? !value : value)),
+    }))
 
   return (
     <Screen
@@ -65,55 +128,100 @@ export function Vachette({
         )
       }
       footer={
-        <Button variant="primary" onClick={() => onSubmit(deal)} disabled={!balanced}>
-          {balanced
+        <Button
+          variant="primary"
+          onClick={() => onSubmit({ kind: 'vachette', ranks })}
+          disabled={!complete}
+        >
+          {complete
             ? 'Valider la vachette'
-            : remaining > 0
-              ? `Il manque ${formatPoints(remaining)} points`
-              : `${formatPoints(-remaining)} points en trop`}
+            : `Encore ${remaining.length} joueur${remaining.length > 1 ? 's' : ''} à classer`}
         </Button>
       }
     >
       <p className="vachette__intro">
-        Chacun pour soi : celui qui ramasse le plus de points perd le plus. Les
-        {` ${TOTAL_POINTS} `}
-        points du jeu doivent être répartis entre les {players.length} joueurs.
+        Chacun pour soi : celui qui ramasse le plus de points perd le plus. Touchez les
+        joueurs <strong>du plus de points au moins de points</strong>. Les points exacts
+        n'entrent pas dans le calcul — seul l'ordre compte.
       </p>
 
-      <Eyebrow>Points ramassés</Eyebrow>
-      <div className="vachette__list">
-        {players.map((player) => (
-          <label key={player.id} className="vachette__row">
-            <Avatar player={player} size={38} />
-            <span className="vachette__name">{player.name}</span>
-            <NumberInput
-              className="vachette__input num"
-              value={deal.points[player.id] ?? 0}
-              onChange={(points) => setPoints(player.id, points)}
-              ariaLabel={`Points de ${player.name}`}
-            />
-            <span
-              className="vachette__score num"
-              data-sign={
-                (scores[player.id] ?? 0) > 0
-                  ? 'up'
-                  : (scores[player.id] ?? 0) < 0
-                    ? 'down'
-                    : undefined
-              }
-            >
-              {balanced ? formatSigned(scores[player.id] ?? 0) : '—'}
-            </span>
-          </label>
-        ))}
-      </div>
+      {remaining.length > 0 && (
+        <>
+          <Eyebrow>
+            {draft.order.length === 0 ? 'Qui a le plus de points ?' : 'Puis ?'}
+          </Eyebrow>
+          <div className="vachette__pool">
+            {remaining.map((player) => (
+              <button
+                key={player.id}
+                type="button"
+                className="vachette__pick"
+                onClick={() => place(player.id)}
+              >
+                <Avatar player={player} size={44} />
+                <span className="vachette__pickName">{player.name}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
-      <div className="vachette__remaining" data-balanced={balanced || undefined}>
-        <span>Total réparti</span>
-        <span className="num">
-          {formatPoints(TOTAL_POINTS - remaining)} / {TOTAL_POINTS}
-        </span>
-      </div>
+      {draft.order.length > 0 && (
+        <>
+          <Eyebrow>Classement</Eyebrow>
+          <div className="vachette__list">
+            {draft.order.map((id, index) => {
+              const player = players.find((p) => p.id === id)
+              if (!player) return null
+              const score = scores[id] ?? 0
+              return (
+                <div key={id} className="vachette__row">
+                  <span className="vachette__rank num" aria-label={`Rang ${ranks[id]}`}>
+                    {ranks[id]}
+                  </span>
+                  <Avatar player={player} size={36} />
+                  <span className="vachette__name">{player.name}</span>
+
+                  {/* Disponible à partir du deuxième : le premier n'a personne devant lui. */}
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      className="vachette__tie"
+                      aria-pressed={draft.tied[index]}
+                      aria-label={`${player.name} à égalité avec ${
+                        players.find((p) => p.id === draft.order[index - 1])?.name ?? 'le précédent'
+                      }`}
+                      onClick={() => toggleTie(index)}
+                    >
+                      =
+                    </button>
+                  )}
+
+                  <span
+                    className="vachette__score num"
+                    data-sign={score > 0 ? 'up' : score < 0 ? 'down' : undefined}
+                  >
+                    {complete ? formatSigned(score) : '—'}
+                  </span>
+
+                  <button
+                    type="button"
+                    className="vachette__remove"
+                    aria-label={`Retirer ${player.name} du classement`}
+                    onClick={() => unplace(index)}
+                  >
+                    ×
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+          <p className="hint">
+            Le <strong>=</strong> met un joueur à égalité avec celui du dessus ; les ex æquo
+            se partagent alors leurs deux places du barème.
+          </p>
+        </>
+      )}
     </Screen>
   )
 }

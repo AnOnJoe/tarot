@@ -12,7 +12,7 @@ Lire [`README.md`](README.md) pour l'usage et les règles,
 ## Commandes
 
 ```sh
-npm test                      # 102 tests — moteur, hauts faits, tags, tours, bilans, fusion
+npm test                      # 107 tests — moteur, hauts faits, tags, tours, bilans, fusion
 npx tsc -b tsconfig.json --noEmit
 npm run build
 npm run dev
@@ -90,6 +90,9 @@ code relu**. Plusieurs bugs de cette base ont été trouvés ainsi, jamais par r
 - **`touch-action: none`** est indispensable sur toute poignée de glissement, et doit rester
   cantonnée à la poignée pour ne pas bloquer le défilement.
 - **iOS zoome** sur tout champ dont le texte descend sous 16 px.
+- **Une vachette se lit sous deux formes.** `ranks` depuis le passage au classement,
+  `points` pour les donnes plus anciennes. Pas de migration : une fusion peut en ramener une
+  ancienne à tout moment, donc `vacheeGroups` doit savoir lire les deux pour toujours.
 - **Le nom de l'app est Vachette, l'URL reste `/tarot/`.** La renommer casserait les
   installations existantes.
 

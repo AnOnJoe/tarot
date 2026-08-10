@@ -33,8 +33,8 @@ function makeDeal(input: Partial<ContractDeal>, gameId = 'g1', index = counter++
   }
 }
 
-function vachette(points: Record<PlayerId, number>, gameId = 'g1', index = counter++): Deal {
-  const input: DealInput = { kind: 'vachette', points }
+function vachette(ranks: Record<PlayerId, number>, gameId = 'g1', index = counter++): Deal {
+  const input: DealInput = { kind: 'vachette', ranks }
   return {
     id: `v${index}`,
     gameId,
@@ -92,7 +92,7 @@ describe('hauts faits', () => {
   })
 
   it('couronne le mieux classé d’une vachette', () => {
-    const deals = [vachette({ a: 30, b: 25, c: 20, d: 16 })]
+    const deals = [vachette({ a: 1, b: 2, c: 3, d: 4 })]
     // Le barème donne +120 au joueur qui a le moins de points.
     expect(count(deals, 'vachetteReine', 'd')).toBe(1)
     expect(count(deals, 'vachetteReine', 'a')).toBe(0)
@@ -182,6 +182,6 @@ describe('faits marquants d’une donne', () => {
   })
 
   it('reste muet sur une vachette', () => {
-    expect(dealHighlights(vachette({ a: 30, b: 25, c: 20, d: 16 }).input)).toEqual([])
+    expect(dealHighlights(vachette({ a: 1, b: 2, c: 3, d: 4 }).input)).toEqual([])
   })
 })

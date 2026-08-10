@@ -182,6 +182,26 @@ pas être. **La distinction est portée par les types**, pas par une convention.
 camps. Le modèle « territoire » — pousser la ligne dans le camp adverse — était cohérent
 mais contre-intuitif : on glisse à droite pour faire monter un score.
 
+**La vachette se saisit en classement, pas en points.** Le barème ne dépend que de l'ordre :
+compter les points de chacun était un détour pour retrouver ce que la table lit dans ses
+plis. La saisie touche les joueurs du plus de points au moins de points, et un `=` déclare
+une égalité avec le joueur du dessus.
+
+Rien n'est présélectionné, et **l'ordre de la table n'est pas proposé comme point de
+départ** : ce serait un classement plausible que personne n'a donné — la même raison qui
+interdit de présélectionner un preneur.
+
+Seul l'*ordre* des rangs compte, jamais leur numérotation : `1,2,2,4` et `1,2,2,3` décrivent
+le même classement et donnent les mêmes scores. Le groupement se fait par valeurs égales
+successives, donc toute numérotation monotone convient.
+
+**Les deux formats coexistent, et le second ne se convertit pas.** Les donnes enregistrées
+avant ce changement n'ont que des points ; elles restent lues telles quelles — les points y
+servent uniquement à retrouver l'ordre, exactement ce qu'ils faisaient déjà. Aucune
+migration : une fusion peut à tout moment ramener une vachette à l'ancien format depuis un
+carnet resté en arrière, donc le moteur doit savoir lire les deux **pour toujours**, pas
+seulement une fois au démarrage.
+
 **Le bilan d'un joueur vit sur sa fiche, pas dans l'écran Statistiques.** Ce sont deux
 questions distinctes : là-bas on compare des joueurs entre eux, ici on regarde une personne.
 La seconde n'avait pas de réponse.
@@ -193,6 +213,12 @@ réussite sans prise s'affiche `—` et non `0 %` : l'absence de donnée n'est p
 
 La feuille surgissante est désormais **plafonnée et défilante** (`88dvh`) : une fiche porte
 assez de contenu pour que ses boutons passent sous le bord d'un petit iPhone.
+
+Sa courbe d'évolution réemploie `CumulativeChart` avec un seul joueur et un point par
+partie. Elle n'apparaît qu'**à partir de deux parties** : un point unique trace une ligne
+plate qui ne raconte rien et occupe la place d'une information. Et seules les parties où il
+a joué figurent sur l'axe — celles des autres y créeraient des paliers qui ne sont pas les
+siens.
 
 **Supprimer une partie se glisse, et se trouve aussi sans le geste.** Le glissement vers la
 gauche est celui des listes iOS, donc appris d'avance — mais un geste ne s'annonce pas : la

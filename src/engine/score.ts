@@ -1,4 +1,4 @@
-import { DEFAULT_RULES, TOTAL_POINTS, takerShares } from './rules'
+import { DEFAULT_RULES, takerShares } from './rules'
 import type {
   ContractDeal,
   Deal,
@@ -128,8 +128,33 @@ function applyMiseries(
 }
 
 /**
- * Calcule une vachette : personne n'ayant pris, chacun joue pour soi et le classement des
- * points réalisés détermine le score. Celui qui en ramasse le plus perd le plus.
+ * Le classement d'une vachette, du plus de points au moins de points, ex æquo regroupés.
+ *
+ * Deux formes de saisie coexistent : les rangs, saisis directement, et les points des
+ * donnes enregistrées avant que la table ne cesse de les compter. Les deux se ramènent au
+ * même groupement, seul objet dont le barème ait besoin.
+ */
+export function vacheeGroups(deal: VacheeDeal, players: PlayerId[]): PlayerId[][] {
+  const key = deal.ranks
+    ? // Rang croissant : le rang 1 ramasse le plus de points, donc encaisse le pire score.
+      (id: PlayerId) => deal.ranks?.[id] ?? players.length
+    : // Points décroissants, d'où le signe : même ordre, autre repère.
+      (id: PlayerId) => -(deal.points?.[id] ?? 0)
+
+  const ordered = [...players].sort((a, b) => key(a) - key(b))
+
+  const groups: PlayerId[][] = []
+  for (const id of ordered) {
+    const last = groups[groups.length - 1]
+    if (last && key(last[0]) === key(id)) last.push(id)
+    else groups.push([id])
+  }
+  return groups
+}
+
+/**
+ * Calcule une vachette : personne n'ayant pris, chacun joue pour soi et le classement
+ * détermine le score. Celui qui ramasse le plus de points perd le plus.
  *
  * En cas d'égalité, les joueurs concernés se partagent la moyenne des rangs qu'ils
  * occupent, ce qui préserve la somme nulle.
@@ -143,22 +168,13 @@ export function scoreVachette(
   const scale = rules.vacheeScale[count]
   if (!scale) throw new Error(`Aucun barème de vachette pour ${count} joueurs`)
 
-  // Du plus de points au moins de points : le premier du classement encaisse le pire score.
-  const ranked = [...players].sort(
-    (a, b) => (deal.points[b] ?? 0) - (deal.points[a] ?? 0),
-  )
-
   const scores: Record<PlayerId, number> = {}
   let i = 0
-  while (i < ranked.length) {
-    let j = i + 1
-    while (j < ranked.length && (deal.points[ranked[j]] ?? 0) === (deal.points[ranked[i]] ?? 0)) {
-      j++
-    }
-    const slice = scale.slice(i, j)
+  for (const group of vacheeGroups(deal, players)) {
+    const slice = scale.slice(i, i + group.length)
     const share = slice.reduce((sum, v) => sum + v, 0) / slice.length
-    for (let k = i; k < j; k++) scores[ranked[k]] = share
-    i = j
+    for (const id of group) scores[id] = share
+    i += group.length
   }
   return scores
 }
@@ -218,8 +234,18 @@ export function maxHandful(
   return null
 }
 
-/** Vérifie qu'une saisie de vachette totalise bien les 91 points du jeu. */
-export function vacheePointsRemaining(deal: VacheeDeal, players: PlayerId[]): number {
-  const total = players.reduce((sum, id) => sum + (deal.points[id] ?? 0), 0)
-  return TOTAL_POINTS - total
+/**
+ * Rangs d'un classement donné sous forme de groupes d'ex æquo, du premier au dernier.
+ *
+ * Numérotation « sportive » : après deux ex æquo au rang 2 vient le rang 4. C'est celle que
+ * la table emploie à voix haute, et `vacheeGroups` sait la relire.
+ */
+export function ranksFromGroups(groups: PlayerId[][]): Record<PlayerId, number> {
+  const ranks: Record<PlayerId, number> = {}
+  let position = 1
+  for (const group of groups) {
+    for (const id of group) ranks[id] = position
+    position += group.length
+  }
+  return ranks
 }

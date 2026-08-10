@@ -5,11 +5,42 @@
   color: var(--ink-soft);
 }
 
+.vachette__intro strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* La réserve : les joueurs pas encore classés, en grand pour être touchés sans viser. */
+.vachette__pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vachette__pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.vachette__pick:active {
+  transform: scale(0.97);
+  background: var(--surface-2);
+}
+
+.vachette__pickName {
+  font-size: 15.5px;
+  font-weight: 560;
+}
+
 .vachette__list {
   display: flex;
   flex-direction: column;
   background: var(--surface);
-
   border-radius: var(--r-card);
   overflow: hidden;
 }
@@ -18,12 +49,21 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 10px 13px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--line);
 }
 
 .vachette__row:last-child {
   border-bottom: 0;
+}
+
+/* Le rang est l'information principale de la ligne : c'est lui qui fait le score. */
+.vachette__rank {
+  width: 26px;
+  font-size: 17px;
+  font-weight: 680;
+  text-align: center;
+  color: var(--ink-soft);
 }
 
 .vachette__name {
@@ -35,20 +75,34 @@
   text-overflow: ellipsis;
 }
 
-.vachette__input {
-  width: 72px;
-  padding: 8px 10px;
-
+/* Cible de 34 px : un basculement se touche au pouce, pas à la pointe du doigt. */
+.vachette__tie,
+.vachette__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
   background: var(--surface-2);
-  color: var(--ink);
+  color: var(--ink-soft);
   font-size: 17px;
-  font-weight: 600;
-  text-align: right;
+  font-weight: 640;
+  cursor: pointer;
+}
+
+.vachette__tie[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.vachette__remove {
+  background: none;
+  font-size: 21px;
 }
 
 .vachette__score {
-  width: 56px;
+  width: 52px;
   font-size: 18px;
   font-weight: 620;
   text-align: right;
@@ -61,21 +115,4 @@
 
 .vachette__score[data-sign="down"] {
   color: var(--neg);
-}
-
-.vachette__remaining {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-  padding: 12px 15px;
-  border: 1px solid var(--neg);
-  border-radius: 12px;
-  font-size: 14px;
-  color: var(--ink-soft);
-}
-
-.vachette__remaining[data-balanced] {
-  border-color: var(--accent);
-  color: var(--accent);
 }
