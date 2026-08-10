@@ -65,6 +65,12 @@ candidat est mesuré en ΔE OKLab contre les huit teintes de joueur :
 | **Corail `#ffab9d`** | **ΔE 16,1** | **Retenu** (mode sombre) |
 | **Grenat `#a81f19`** | **ΔE 14,9** | **Retenu** (mode clair) |
 
+**Un score positif se met en `--pos`, jamais en `--accent`.** En mode clair l'accent est un
+grenat, à ΔE 28,5 du rouge des scores négatifs — mais à l'œil, deux rouges. L'écran de
+vachette, qui ne parle que de qui gagne et qui perd, affichait ainsi `+120` et `−120` dans
+la même teinte. Le couple `--pos` / `--neg` du tableau des scores est le bon, et son vert
+reste à ΔE 11,1 du joueur vert.
+
 Le rouge saturé de la marque (`--brand`) échappe à cette règle : il ne sert qu'au logo, où
 rien ne peut le confondre avec un joueur.
 
@@ -184,23 +190,42 @@ mais contre-intuitif : on glisse à droite pour faire monter un score.
 
 **La vachette se saisit en classement, pas en points.** Le barème ne dépend que de l'ordre :
 compter les points de chacun était un détour pour retrouver ce que la table lit dans ses
-plis. La saisie touche les joueurs du plus de points au moins de points, et un `=` déclare
-une égalité avec le joueur du dessus.
+plis.
+
+**Du moins de points au plus de points**, et non l'inverse. C'est le sens du dépouillement,
+et le premier nommé est alors celui qui gagne le plus : l'écran se lit comme un podium, du
+vainqueur au dernier. Le `=` se pose **entre deux lignes** — une égalité relie deux joueurs,
+ce n'est pas une propriété de l'un d'eux, et le trait qui traverse la jonction dit ce qu'elle
+relie.
 
 Rien n'est présélectionné, et **l'ordre de la table n'est pas proposé comme point de
 départ** : ce serait un classement plausible que personne n'a donné — la même raison qui
 interdit de présélectionner un preneur.
 
-Seul l'*ordre* des rangs compte, jamais leur numérotation : `1,2,2,4` et `1,2,2,3` décrivent
-le même classement et donnent les mêmes scores. Le groupement se fait par valeurs égales
-successives, donc toute numérotation monotone convient.
+Le classement est stocké comme un **tableau de groupes** (`standing`), du moins au plus de
+points : l'ordre et les égalités sont portés par la structure, sans convention de
+numérotation à respecter. Les numéros affichés (1, 2, 2, 4) ne sont qu'un rendu.
 
-**Les deux formats coexistent, et le second ne se convertit pas.** Les donnes enregistrées
-avant ce changement n'ont que des points ; elles restent lues telles quelles — les points y
-servent uniquement à retrouver l'ordre, exactement ce qu'ils faisaient déjà. Aucune
-migration : une fusion peut à tout moment ramener une vachette à l'ancien format depuis un
-carnet resté en arrière, donc le moteur doit savoir lire les deux **pour toujours**, pas
-seulement une fois au démarrage.
+### Trois formats, aucune conversion
+
+| Champ | Sens | Écrit ? |
+|---|---|---|
+| `standing` | groupes, du **moins** au plus de points | oui |
+| `ranks` | rangs, `1` = le **plus** de points | non, lu seulement |
+| `points` | points ramassés par chacun | non, lu seulement |
+
+Les deux formats abandonnés restent lus indéfiniment, et **rien n'est migré**. Deux raisons :
+une donne validée ne se recalcule jamais, et surtout une fusion peut à tout moment ramener
+une vachette d'un format ancien depuis un carnet resté en arrière — une migration au
+démarrage ne couvrirait donc pas le cas.
+
+Le champ a **changé de nom en changeant de convention** (`ranks` → `standing`) précisément
+pour qu'une donne de l'un ne puisse pas se lire comme une donne de l'autre. Réutiliser le
+nom en inversant le sens aurait retourné silencieusement les classements déjà enregistrés.
+
+`vacheeGroups` ramène les trois formes à l'ordre du barème et **partitionne toujours la
+table** : un joueur absent de la saisie est rattaché en queue plutôt qu'omis, sans quoi le
+barème serait découpé de travers et la somme de la donne cesserait de valoir zéro.
 
 **Le bilan d'un joueur vit sur sa fiche, pas dans l'écran Statistiques.** Ce sont deux
 questions distinctes : là-bas on compare des joueurs entre eux, ici on regarde une personne.

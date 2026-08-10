@@ -50,11 +50,31 @@
   align-items: center;
   gap: 11px;
   padding: 8px 10px;
-  border-bottom: 1px solid var(--line);
 }
 
-.vachette__row:last-child {
-  border-bottom: 0;
+/*
+ * La jonction entre deux joueurs. Le trait la traverse de part en part pour dire ce qu'elle
+ * relie ; le signe s'y pose au milieu. C'est le trait de séparation des rangées qui joue ce
+ * rôle : les lignes n'en portent donc pas.
+ */
+.vachette__between {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+}
+
+.vachette__between::before,
+.vachette__between::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.vachette__between[data-tied]::before,
+.vachette__between[data-tied]::after {
+  background: var(--accent);
 }
 
 /* Le rang est l'information principale de la ligne : c'est lui qui fait le score. */
@@ -83,6 +103,7 @@
   justify-content: center;
   width: 34px;
   height: 34px;
+  flex: none;
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--ink-soft);
@@ -109,8 +130,13 @@
   color: var(--ink-faint);
 }
 
+/*
+ * `--pos` et non `--accent` : en thème clair l'accent est un grenat, à peine distinct du
+ * rouge des scores négatifs. Sur un écran qui ne parle que de qui gagne et qui perd, les
+ * deux signes doivent se lire d'un coup d'œil — c'est le couple qu'emploie déjà le tableau.
+ */
 .vachette__score[data-sign="up"] {
-  color: var(--accent);
+  color: var(--pos);
 }
 
 .vachette__score[data-sign="down"] {

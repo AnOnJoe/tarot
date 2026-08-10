@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { formatSigned } from '../engine/rules'
 import { ranksFromGroups, scoreVachette, vacheeGroups } from '../engine/score'
 import type { PlayerId, RuleSet, VacheeDeal } from '../engine/types'
@@ -18,9 +18,8 @@ interface VachetteProps {
 }
 
 /**
- * Classement en cours de construction.
+ * Classement en cours de construction, **du moins de points au plus de points**.
  *
- * `order` est la suite des joueurs déjà placés, du plus de points au moins de points.
  * `tied[i]` dit que le joueur en position `i` est à égalité avec celui qui le précède —
  * c'est la seule information que l'ordre seul ne sait pas porter.
  */
@@ -29,8 +28,8 @@ interface Draft {
   tied: boolean[]
 }
 
-/** Groupes d'ex æquo décrits par le brouillon, tels que le barème les attend. */
-function groupsOf(draft: Draft): PlayerId[][] {
+/** Groupes d'ex æquo décrits par le brouillon, dans son ordre : du moins au plus de points. */
+function standingOf(draft: Draft): PlayerId[][] {
   const groups: PlayerId[][] = []
   draft.order.forEach((id, index) => {
     if (index > 0 && draft.tied[index]) groups[groups.length - 1].push(id)
@@ -41,10 +40,14 @@ function groupsOf(draft: Draft): PlayerId[][] {
 
 /** Relit une donne enregistrée pour la rouvrir dans l'écran de classement. */
 function draftFrom(deal: VacheeDeal, players: Player[]): Draft {
-  const groups = vacheeGroups(
-    deal,
-    players.map((p) => p.id),
-  )
+  // `vacheeGroups` rend l'ordre du barème — du plus au moins de points : on le retourne.
+  const groups = [
+    ...vacheeGroups(
+      deal,
+      players.map((p) => p.id),
+    ),
+  ].reverse()
+
   const order: PlayerId[] = []
   const tied: boolean[] = []
   for (const group of groups) {
@@ -59,9 +62,12 @@ function draftFrom(deal: VacheeDeal, players: Player[]): Draft {
 /**
  * Saisie d'une vachette : personne n'a pris, et **seul le classement compte**.
  *
+ * On touche les joueurs du **moins** de points au plus de points : c'est dans ce sens que la
+ * table dépouille, et le premier nommé est aussi celui qui gagne le plus — l'écran se lit
+ * alors comme un podium, du vainqueur au dernier.
+ *
  * Rien n'est présélectionné, et l'ordre de la table n'est pas proposé comme point de
- * départ : ce serait un classement plausible que personne n'a donné. On touche les joueurs
- * dans l'ordre, du plus de points au moins de points, comme la table le dit à voix haute.
+ * départ : ce serait un classement plausible que personne n'a donné.
  */
 export function Vachette({
   players,
@@ -78,14 +84,14 @@ export function Vachette({
 
   const remaining = players.filter((p) => !draft.order.includes(p.id))
   const complete = remaining.length === 0
-  const groups = groupsOf(draft)
-  const ranks = ranksFromGroups(groups)
+  const standing = standingOf(draft)
+  const ranks = ranksFromGroups(standing)
 
   const scores = useMemo(
     () =>
       complete
         ? scoreVachette(
-            { kind: 'vachette', ranks },
+            { kind: 'vachette', standing },
             players.map((p) => p.id),
             rules,
           )
@@ -130,7 +136,7 @@ export function Vachette({
       footer={
         <Button
           variant="primary"
-          onClick={() => onSubmit({ kind: 'vachette', ranks })}
+          onClick={() => onSubmit({ kind: 'vachette', standing })}
           disabled={!complete}
         >
           {complete
@@ -140,15 +146,15 @@ export function Vachette({
       }
     >
       <p className="vachette__intro">
-        Chacun pour soi : celui qui ramasse le plus de points perd le plus. Touchez les
-        joueurs <strong>du plus de points au moins de points</strong>. Les points exacts
+        Chacun pour soi : celui qui ramasse le moins de points gagne le plus. Touchez les
+        joueurs <strong>du moins de points au plus de points</strong>. Les points exacts
         n'entrent pas dans le calcul — seul l'ordre compte.
       </p>
 
       {remaining.length > 0 && (
         <>
           <Eyebrow>
-            {draft.order.length === 0 ? 'Qui a le plus de points ?' : 'Puis ?'}
+            {draft.order.length === 0 ? 'Qui a le moins de points ?' : 'Puis ?'}
           </Eyebrow>
           <div className="vachette__pool">
             {remaining.map((player) => (
@@ -174,51 +180,58 @@ export function Vachette({
               const player = players.find((p) => p.id === id)
               if (!player) return null
               const score = scores[id] ?? 0
+              const previous = players.find((p) => p.id === draft.order[index - 1])
               return (
-                <div key={id} className="vachette__row">
-                  <span className="vachette__rank num" aria-label={`Rang ${ranks[id]}`}>
-                    {ranks[id]}
-                  </span>
-                  <Avatar player={player} size={36} />
-                  <span className="vachette__name">{player.name}</span>
-
-                  {/* Disponible à partir du deuxième : le premier n'a personne devant lui. */}
+                <Fragment key={id}>
+                  {/* Le signe se pose *entre* deux joueurs : c'est une jonction, pas une
+                      propriété de la ligne du dessous. */}
                   {index > 0 && (
-                    <button
-                      type="button"
-                      className="vachette__tie"
-                      aria-pressed={draft.tied[index]}
-                      aria-label={`${player.name} à égalité avec ${
-                        players.find((p) => p.id === draft.order[index - 1])?.name ?? 'le précédent'
-                      }`}
-                      onClick={() => toggleTie(index)}
+                    <div
+                      className="vachette__between"
+                      data-tied={draft.tied[index] || undefined}
                     >
-                      =
-                    </button>
+                      <button
+                        type="button"
+                        className="vachette__tie"
+                        aria-pressed={draft.tied[index]}
+                        aria-label={`Mettre ${previous?.name ?? 'le précédent'} et ${player.name} à égalité`}
+                        onClick={() => toggleTie(index)}
+                      >
+                        =
+                      </button>
+                    </div>
                   )}
 
-                  <span
-                    className="vachette__score num"
-                    data-sign={score > 0 ? 'up' : score < 0 ? 'down' : undefined}
-                  >
-                    {complete ? formatSigned(score) : '—'}
-                  </span>
+                  <div className="vachette__row">
+                    <span className="vachette__rank num" aria-label={`Rang ${ranks[id]}`}>
+                      {ranks[id]}
+                    </span>
+                    <Avatar player={player} size={36} />
+                    <span className="vachette__name">{player.name}</span>
 
-                  <button
-                    type="button"
-                    className="vachette__remove"
-                    aria-label={`Retirer ${player.name} du classement`}
-                    onClick={() => unplace(index)}
-                  >
-                    ×
-                  </button>
-                </div>
+                    <span
+                      className="vachette__score num"
+                      data-sign={score > 0 ? 'up' : score < 0 ? 'down' : undefined}
+                    >
+                      {complete ? formatSigned(score) : '—'}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="vachette__remove"
+                      aria-label={`Retirer ${player.name} du classement`}
+                      onClick={() => unplace(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </Fragment>
               )
             })}
           </div>
           <p className="hint">
-            Le <strong>=</strong> met un joueur à égalité avec celui du dessus ; les ex æquo
-            se partagent alors leurs deux places du barème.
+            Le <strong>=</strong> entre deux joueurs les met à égalité ; les ex æquo se
+            partagent alors leurs deux places du barème.
           </p>
         </>
       )}

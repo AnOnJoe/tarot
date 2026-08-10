@@ -27,7 +27,7 @@ function remapInput(input: DealInput, map: Map<PlayerId, PlayerId>): DealInput {
   const id = (value: PlayerId) => map.get(value) ?? value
 
   if (input.kind === 'vachette') {
-    // Les deux formes de saisie sont réécrites : un carnet distant peut porter l'ancienne.
+    // Les trois formes sont réécrites : un carnet distant peut porter n'importe laquelle.
     const rekey = (source: Record<PlayerId, number>) => {
       const target: Record<PlayerId, number> = {}
       for (const [playerId, value] of Object.entries(source)) target[id(playerId)] = value
@@ -35,6 +35,9 @@ function remapInput(input: DealInput, map: Map<PlayerId, PlayerId>): DealInput {
     }
     return {
       ...input,
+      ...(input.standing
+        ? { standing: input.standing.map((group) => group.map(id)) }
+        : {}),
       ...(input.ranks ? { ranks: rekey(input.ranks) } : {}),
       ...(input.points ? { points: rekey(input.points) } : {}),
     }

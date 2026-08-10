@@ -77,15 +77,25 @@ export interface ContractDeal {
 export interface VacheeDeal {
   kind: 'vachette'
   /**
-   * Rang de chacun. **1 = celui qui a ramassé le plus de points**, donc le plus grand
-   * perdant. Les ex æquo portent le même rang.
+   * Le classement, **du moins de points au plus de points**, ex æquo regroupés.
    *
-   * Seul l'ordre des valeurs importe, pas leur numérotation : `1,2,2,4` et `1,2,2,3`
-   * décrivent le même classement.
+   * `[['a'], ['b', 'c'], ['d']]` se lit : `a` en a le moins, `b` et `c` sont à égalité,
+   * `d` en a le plus. C'est l'ordre dans lequel la table annonce ses plis, et le seul
+   * objet dont le barème ait besoin.
+   *
+   * Un tableau de groupes plutôt que des numéros de rang : l'ordre et les égalités sont
+   * portés par la structure, sans convention de numérotation à respecter.
+   */
+  standing?: PlayerId[][]
+  /**
+   * Rangs, dans la convention inverse — 1 valait « le plus de points ».
+   *
+   * Encore lu, plus jamais écrit. Le nom a changé avec la convention, précisément pour
+   * qu'une donne de l'un ne puisse pas se lire comme une donne de l'autre.
    */
   ranks?: Record<PlayerId, number>
   /**
-   * Points ramassés, tels que les versions antérieures les saisissaient.
+   * Points ramassés, tels que les premières versions les saisissaient.
    *
    * Encore lu — les donnes déjà enregistrées n'ont que cela, et une donne validée ne se
    * recalcule jamais — mais plus jamais écrit.

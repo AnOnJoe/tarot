@@ -128,28 +128,45 @@ function applyMiseries(
 }
 
 /**
- * Le classement d'une vachette, du plus de points au moins de points, ex æquo regroupés.
+ * Le classement d'une vachette **dans l'ordre du barème** : du plus de points au moins de
+ * points, ex æquo regroupés. Le premier groupe encaisse le pire score.
  *
- * Deux formes de saisie coexistent : les rangs, saisis directement, et les points des
- * donnes enregistrées avant que la table ne cesse de les compter. Les deux se ramènent au
+ * Trois formes de saisie coexistent — le classement du moins au plus de points, les rangs
+ * de la convention inverse, et les points des premières versions. Toutes se ramènent ici au
  * même groupement, seul objet dont le barème ait besoin.
+ *
+ * Le résultat **partitionne toujours `players`** : un joueur absent de la saisie est ajouté
+ * en queue plutôt qu'omis, sans quoi le barème serait découpé de travers et la somme de la
+ * donne cesserait de valoir zéro.
  */
 export function vacheeGroups(deal: VacheeDeal, players: PlayerId[]): PlayerId[][] {
-  const key = deal.ranks
-    ? // Rang croissant : le rang 1 ramasse le plus de points, donc encaisse le pire score.
-      (id: PlayerId) => deal.ranks?.[id] ?? players.length
-    : // Points décroissants, d'où le signe : même ordre, autre repère.
-      (id: PlayerId) => -(deal.points?.[id] ?? 0)
+  const table = new Set(players)
+  let groups: PlayerId[][]
 
-  const ordered = [...players].sort((a, b) => key(a) - key(b))
+  if (deal.standing) {
+    // Saisi du moins de points au plus de points : le barème veut l'inverse.
+    groups = [...deal.standing]
+      .reverse()
+      .map((group) => group.filter((id) => table.has(id)))
+      .filter((group) => group.length > 0)
+  } else {
+    const key = deal.ranks
+      ? // Rang croissant : le rang 1 ramassait le plus de points.
+        (id: PlayerId) => deal.ranks?.[id] ?? players.length
+      : // Points décroissants, d'où le signe : même ordre, autre repère.
+        (id: PlayerId) => -(deal.points?.[id] ?? 0)
 
-  const groups: PlayerId[][] = []
-  for (const id of ordered) {
-    const last = groups[groups.length - 1]
-    if (last && key(last[0]) === key(id)) last.push(id)
-    else groups.push([id])
+    groups = []
+    for (const id of [...players].sort((a, b) => key(a) - key(b))) {
+      const last = groups[groups.length - 1]
+      if (last && key(last[0]) === key(id)) last.push(id)
+      else groups.push([id])
+    }
   }
-  return groups
+
+  const placed = new Set(groups.flat())
+  const missing = players.filter((id) => !placed.has(id))
+  return missing.length > 0 ? [...groups, missing] : groups
 }
 
 /**
@@ -235,10 +252,11 @@ export function maxHandful(
 }
 
 /**
- * Rangs d'un classement donné sous forme de groupes d'ex æquo, du premier au dernier.
+ * Numérote des groupes d'ex æquo, du premier au dernier — pour l'affichage seul.
  *
  * Numérotation « sportive » : après deux ex æquo au rang 2 vient le rang 4. C'est celle que
- * la table emploie à voix haute, et `vacheeGroups` sait la relire.
+ * la table emploie à voix haute. Rien de tout cela n'est stocké : le classement enregistré
+ * est la structure des groupes, pas leur numérotation.
  */
 export function ranksFromGroups(groups: PlayerId[][]): Record<PlayerId, number> {
   const ranks: Record<PlayerId, number> = {}

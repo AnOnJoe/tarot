@@ -121,7 +121,7 @@ describe('fusion de deux carnets', () => {
           gameId: 'g1',
           index: 0,
           dealerId: 'far-a',
-          input: { kind: 'vachette', ranks: { 'far-a': 1 } },
+          input: { kind: 'vachette', standing: [['far-a']] },
           scores: { 'far-a': 0 },
           createdAt: 1,
         },
@@ -130,14 +130,17 @@ describe('fusion de deux carnets', () => {
     const { dataset } = mergeDatasets(local, incoming)
     const input = dataset.deals[0].input
     expect(input.kind).toBe('vachette')
-    if (input.kind === 'vachette') expect(Object.keys(input.ranks ?? {})).toEqual(['local-a'])
+    if (input.kind === 'vachette') expect(input.standing).toEqual([['local-a']])
   })
 
   /*
    * Un carnet resté sur une version antérieure envoie encore des vachettes en points : la
    * fusion doit les réécrire aussi, sans quoi la donne reçue désignerait un joueur inconnu.
    */
-  it('réécrit une vachette reçue à l’ancien format', () => {
+  it.each([
+    ['en points', { kind: 'vachette' as const, points: { 'far-a': 30 } }],
+    ['en rangs', { kind: 'vachette' as const, ranks: { 'far-a': 1 } }],
+  ])('réécrit une vachette reçue à l’ancien format (%s)', (_label, vachette) => {
     const local: Dataset = { players: [player('local-a', 'AAA-111')], games: [], deals: [] }
     const incoming: Dataset = {
       players: [player('far-a', 'AAA-111')],
@@ -148,7 +151,7 @@ describe('fusion de deux carnets', () => {
           gameId: 'g1',
           index: 0,
           dealerId: 'far-a',
-          input: { kind: 'vachette', points: { 'far-a': 30 } },
+          input: vachette,
           scores: { 'far-a': 0 },
           createdAt: 1,
         },
@@ -157,8 +160,10 @@ describe('fusion de deux carnets', () => {
     const { dataset } = mergeDatasets(local, incoming)
     const input = dataset.deals[0].input
     if (input.kind === 'vachette') {
-      expect(Object.keys(input.points ?? {})).toEqual(['local-a'])
-      expect(input.ranks).toBeUndefined()
+      const rewritten = input.points ?? input.ranks
+      expect(Object.keys(rewritten ?? {})).toEqual(['local-a'])
+      // La forme reçue est conservée : la fusion réécrit des identifiants, pas des formats.
+      expect(input.standing).toBeUndefined()
     }
   })
 
