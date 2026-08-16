@@ -112,5 +112,9 @@ code relu**. Plusieurs bugs de cette base ont été trouvés ainsi, jamais par r
 `git push` sur `main` suffit : le workflow lance les tests, construit et met en ligne. **Les
 tests bloquent le déploiement.**
 
+Un workflow en échec ne casse rien en ligne : GitHub Pages sert le dernier déploiement
+réussi. Le risque d'une mise à jour du workflow est donc « la nouvelle version ne part pas »,
+jamais « le site tombe » — ce qui se voit au premier coup d'œil sur `gh run list`.
+
 Les actions vers l'extérieur — créer un dépôt, pousser, publier — se confirment avec
 l'utilisateur avant d'être faites.

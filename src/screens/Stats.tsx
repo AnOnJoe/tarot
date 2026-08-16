@@ -35,7 +35,7 @@ interface StatsProps {
 type Scope = 'partie' | 'tout'
 
 /** Les trois façons de regarder l'historique : d'ensemble, joueur par joueur, en exploits. */
-type Section = 'table' | 'joueurs' | 'faits'
+type Section = 'parties' | 'joueurs' | 'faits'
 
 /**
  * Le pôle d'analyse de l'application.
@@ -49,7 +49,7 @@ type Section = 'table' | 'joueurs' | 'faits'
  */
 export function Stats({ game, celebrate, onClose }: StatsProps) {
   const [scope, setScope] = useState<Scope>(game ? 'partie' : 'tout')
-  const [section, setSection] = useState<Section>('table')
+  const [section, setSection] = useState<Section>('parties')
   /** Joueur dont on lit la fiche, ou `null` pour la liste. */
   const [focus, setFocus] = useState<PlayerId | null>(null)
   const [deals, setDeals] = useState<Deal[]>([])
@@ -141,16 +141,16 @@ export function Stats({ game, celebrate, onClose }: StatsProps) {
               <Chip
                 selected={scope === 'tout'}
                 onClick={() => setScope('tout')}
-                label="Toutes les parties"
+                label="Tout l'historique"
               />
             </div>
           )}
 
           <div className="chips" style={{ marginTop: 10 }}>
             <Chip
-              selected={section === 'table'}
-              onClick={() => setSection('table')}
-              label="La table"
+              selected={section === 'parties'}
+              onClick={() => setSection('parties')}
+              label="Les parties"
             />
             <Chip
               selected={section === 'joueurs'}
@@ -170,8 +170,8 @@ export function Stats({ game, celebrate, onClose }: StatsProps) {
             </EmptyState>
           ) : (
             <div style={{ marginTop: 18 }}>
-              {section === 'table' && (
-                <TableSection
+              {section === 'parties' && (
+                <GamesSection
                   scope={scope}
                   deals={deals}
                   players={players}
@@ -199,8 +199,14 @@ export function Stats({ game, celebrate, onClose }: StatsProps) {
   )
 }
 
-/** L'historique vu d'ensemble : les courbes, les bilans, ce que la table a d'elle-même. */
-function TableSection({
+/**
+ * Les parties vues d'ensemble : les courbes, les bilans, et ce que la tablée a à dire d'elle-même.
+ *
+ * Nommée « Les parties » et non « La table » à l'écran : le mot *table* désigne déjà, dans
+ * l'écran de partie, l'ordre des joueurs et qui donne ensuite. Deux sens pour un mot dans la
+ * même application, c'est un de trop.
+ */
+function GamesSection({
   scope,
   deals,
   players,

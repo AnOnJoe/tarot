@@ -99,7 +99,7 @@ export function Home({
   const [unsaved, setUnsaved] = useState(0)
   /** Partie dont le glissement est ouvert : une seule à la fois, comme dans iOS. */
   const [swiped, setSwiped] = useState<string | null>(null)
-  /** Toutes les donnes, réunies de partie en partie pour nourrir la carte de la table. */
+  /** Toutes les donnes, réunies de partie en partie pour nourrir la carte des statistiques. */
   const [allDeals, setAllDeals] = useState<Deal[]>([])
 
   const load = async () => {
@@ -286,12 +286,13 @@ export function Home({
         </EmptyState>
       )}
 
-      {/* La carte de la table. Elle porte ce que l'historique a de plus vivant à dire au
-          moment où l'on ouvre l'application : c'est ce qui donne envie d'y entrer, là où une
-          entrée de menu intitulée « Statistiques » n'appelait personne. */}
+      {/* Elle porte ce que l'historique a de plus vivant à dire au moment où l'on ouvre
+          l'application : c'est ce qui donne envie d'y entrer, là où la même entrée rangée
+          sous « Paramètres » n'appelait personne. Le titre nomme la destination, les deux
+          accroches font le travail d'attirer l'œil. */}
       {allDeals.length > 0 && (
         <>
-          <p className="eyebrow">La table</p>
+          <p className="eyebrow">Statistiques</p>
           <button type="button" className="pulse" onClick={onOpenStats}>
             {highlights.length > 0 ? (
               highlights.map((highlight) => (

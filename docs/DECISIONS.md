@@ -306,7 +306,10 @@ deviendrait inatteignable.
 **Les statistiques ont quitté les Paramètres pour une carte d'accueil.** Rangées au même
 rang que la Sauvegarde, elles n'appelaient personne : on n'ouvre pas un menu de réglages pour
 le plaisir. La carte porte deux accroches vivantes — qui mène, qui monte — et c'est ce qui
-donne envie d'entrer. Deux au plus : une troisième en ferait un tableau de bord, et on
+donne envie d'entrer.
+
+Son titre nomme la destination — *Statistiques* — plutôt que le sujet : ce sont les accroches
+qui attirent l'œil, le titre n'a qu'à dire où l'on va. Deux au plus : une troisième en ferait un tableau de bord, et on
 cesserait de la lire. Les *Paramètres* ne gardent que ce qui se règle vraiment — carnet,
 barèmes, sauvegarde.
 
@@ -317,6 +320,13 @@ l'application.
 **Les hauts faits ont rejoint les statistiques** plutôt que de garder leur écran. Ils sont
 une lecture de l'historique parmi d'autres ; deux entrées séparées pour la même matière
 faisaient hésiter à chaque fois.
+
+**Le mot « table » n'a qu'un sens dans l'application** : l'ordre des joueurs et la rotation
+du donneur, dans l'écran de partie. La section d'ensemble des statistiques s'est d'abord
+appelée *La table*, ce qui en faisait un second sens — et rendait le titre illisible. Elle
+s'appelle *Les parties*, en parallèle des *Joueurs* et des *Hauts faits*. Pour la même
+raison, l'échelle se choisit entre *cette partie* et *tout l'historique* : « toutes les
+parties » juste au-dessus d'un onglet « Les parties » recréait la confusion d'un cran.
 
 **Un conseil se lit comme une phrase, pas comme une alerte** : pas de fond coloré, un liseré
 à gauche. Trois états seulement — vert pour un appui, rouge pour une faille, **gris pour un

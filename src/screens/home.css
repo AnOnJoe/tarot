@@ -64,7 +64,7 @@
 }
 
 /*
- * Carte de la table.
+ * Carte des statistiques, à l'accueil.
  *
  * Surface pleine et non bordée, à la différence de la partie en cours : celle-ci appelle une
  * action, celle-là raconte. Deux accroches au plus — une troisième transformerait la carte

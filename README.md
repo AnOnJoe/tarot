@@ -52,13 +52,13 @@ recharge si une nouvelle version est en ligne.
 
 | Écran | À quoi il sert |
 |---|---|
-| **Accueil** | Reprendre la partie en cours, revoir les trois dernières parties, et la **carte de la table** — deux accroches sur ce que l'historique a de plus vivant à dire |
+| **Accueil** | Reprendre la partie en cours, revoir les trois dernières parties, et la **carte des statistiques** — deux accroches sur ce que l'historique a de plus vivant à dire |
 | **Nouvelle partie** | Composer la table et désigner le premier donneur |
 | **Partie** | Le tableau des donnes, les cumuls, le rang de chacun |
 | **Saisie d'une donne** | Preneur, contrat, bouts, annonces, curseur de points, détail du calcul |
 | **Vachette** | Saisie du contrat maison : le **classement**, du moins de points au plus de points, ex æquo compris |
 | **Table** | Corriger l'ordre des joueurs en cours de partie et qui donne ensuite |
-| **Statistiques** | Trois sections : *la table* (courbes, bilans, ce que l'historique dit de vous), *les joueurs* (la fiche d'analyse de chacun), *les hauts faits* |
+| **Statistiques** | Trois sections : *les parties* (courbes, bilans, ce que l'historique dit de vous), *les joueurs* (la fiche d'analyse de chacun), *les hauts faits* |
 | **Carnet des joueurs** | Modifier un nom, une photo, un tag ; le bilan de chacun ; retirer quelqu'un |
 | **Règles maison** | Tous les barèmes, modifiables sans toucher au code |
 | **Sauvegarde** | Exporter, fusionner avec quelqu'un, ou restaurer — avec la date de la dernière sauvegarde |
@@ -118,14 +118,20 @@ C'est une autre question que l'écran *Statistiques*, qui compare les joueurs en
 
 ## Ce que les statistiques savent dire
 
-L'écran *Statistiques* s'ouvre depuis la **carte de la table**, à l'accueil. Trois sections.
+L'écran *Statistiques* s'ouvre depuis sa **carte à l'accueil**. Trois sections.
 
-### La table
+### Les parties
 
 Les courbes d'évolution, la réussite des prises, le bilan de chacun, l'attaque contre la
-défense — et, sous *ce que dit l'historique*, les observations qui portent sur la table
+défense — et, sous *ce que dit l'historique*, les observations qui portent sur la tablée
 elle-même : les attelages à cinq qui gagnent ensemble, le joueur le plus régulier, le duel
 le plus fourni.
+
+> Cette section ne s'appelle pas *la table* : l'écran de partie emploie déjà ce mot pour
+> l'ordre des joueurs et la rotation du donneur.
+
+Depuis une partie, une seconde rangée choisit l'échelle — *cette partie* ou *tout
+l'historique*.
 
 ### Les joueurs
 
