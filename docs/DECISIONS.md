@@ -303,9 +303,101 @@ ouvre l'application pour jouer, pas pour consulter des archives ni changer un ba
 partie en cours ; sans cela, deux parties se disputeraient la même place et l'une
 deviendrait inatteignable.
 
+**Les statistiques ont quitté les Paramètres pour une carte d'accueil.** Rangées au même
+rang que la Sauvegarde, elles n'appelaient personne : on n'ouvre pas un menu de réglages pour
+le plaisir. La carte porte deux accroches vivantes — qui mène, qui monte — et c'est ce qui
+donne envie d'entrer. Deux au plus : une troisième en ferait un tableau de bord, et on
+cesserait de la lire. Les *Paramètres* ne gardent que ce qui se règle vraiment — carnet,
+barèmes, sauvegarde.
+
+Une barre d'onglets permanente aurait été plus visible encore, mais elle aurait coûté la
+barre d'action du bas, où vit *Nouvelle partie* — l'action pour laquelle on ouvre
+l'application.
+
+**Les hauts faits ont rejoint les statistiques** plutôt que de garder leur écran. Ils sont
+une lecture de l'historique parmi d'autres ; deux entrées séparées pour la même matière
+faisaient hésiter à chaque fois.
+
+**Un conseil se lit comme une phrase, pas comme une alerte** : pas de fond coloré, un liseré
+à gauche. Trois états seulement — vert pour un appui, rouge pour une faille, **gris pour un
+constat**. Colorer le neutre avec l'accent le rendait, sur le thème clair où celui-ci est un
+rouge sombre, indiscernable d'une fragilité : on s'inquiétait pour un simple fait.
+
+La couleur ne porte jamais rien seule : la phrase énonce son chiffre et son effectif, et se
+lit entière en gris.
+
 **Les hauts faits ne sont pas stockés**, ils se recalculent depuis les donnes. Corriger une
 donne retire donc le haut fait qu'elle avait fait décrocher — ce qui vaut mieux qu'un
 tableau de chasse qui mentirait.
+
+---
+
+## Analyses et conseils
+
+### Sous l'effectif, on se tait
+
+C'est la règle qui gouverne `advice.ts`, et la seule qui compte. Un taux de réussite sur
+trois prises n'est pas une tendance, c'est du hasard mis en forme ; l'affirmer à table ferait
+perdre à l'application la seule chose qu'elle ait à vendre — sa justesse. Chaque règle porte
+donc son seuil, exporté et testé, et **rien ne s'affiche en dessous**.
+
+| Seuil | Valeur | Ce qu'il protège |
+|---|---|---|
+| `MIN_TAKES` | 12 | juger la façon de prendre |
+| `MIN_TAKES_BY_CONTRACT` | 8 | juger le rendement d'un contrat |
+| `MIN_TAKES_BY_OUDLERS` | 6 | tirer une règle d'un nombre de bouts |
+| `MIN_FALLS` | 6 | parler de la façon de chuter |
+| `MIN_DEFENSES` | 30 | comparer un défenseur à sa table |
+| `MIN_DUEL_GAMES` | 5 | faire d'un face-à-face autre chose qu'une anecdote |
+| `MIN_PARTNERSHIP_TAKES` | 6 | parler d'un attelage à cinq |
+| `MIN_VACHETTES` | 6 | dire ce que la vachette coûte à quelqu'un |
+| `NOTABLE_RATE` | 3 pts/donne | signaler un écart plutôt que du bruit |
+
+`MIN_DEFENSES` est haut à dessein : le défenseur ne choisit ni sa main ni le contrat qu'il
+subit, et il faut beaucoup de donnes pour que son apport émerge du bruit.
+
+Le silence n'est pas une panne, et la fiche le dit en toutes lettres — sans quoi on
+chercherait ce qui ne s'affiche pas.
+
+**Les conseils citent l'effectif, pas un pourcentage.** « 2 prises sur 9 » se conteste,
+« 22 % » se croit. Le second cache ce sur quoi il repose ; le premier l'expose.
+
+### La réussite d'une prise se lit sur le contrat, jamais sur le score
+
+Une misère encaissée le même tour peut rendre positif le score d'un preneur qui a chuté. Le
+seuil, lui, ne ment pas. `playerStats` lisait le score et `insights` le contrat : la même
+prise était **tenue dans la liste et chutée dans la fiche**, sur le même écran. Les deux
+lisent désormais le contrat.
+
+Cela fait entrer les barèmes dans l'analyse, sans rien contredire : `Deal.scores` reste figé
+à sa validation, seul l'écart au seuil se recalcule à la lecture. Changer un seuil dans les
+Règles maison change donc ce que l'analyse raconte, jamais les points déjà marqués.
+
+### Rapporter avant de comparer
+
+Deux nombres bruts ne se comparent presque jamais dans ce jeu :
+
+- **Les prises se rapportent à la part équitable.** Dix prises en trente donnes à trois
+  joueurs, c'est exactement sa part ; les mêmes dix en trente donnes à cinq, c'est le double.
+  `appetite` divise les prises par celles qu'un partage égal aurait données, table par table
+  — un joueur des soirées à trois et un joueur des soirées à cinq redeviennent comparables.
+- **Les soirées se mesurent en points par donne.** Une partie de vingt-cinq donnes creuse
+  mécaniquement des écarts qu'une partie de huit ne peut pas creuser ; une courbe de totaux
+  ne mesurerait que la longueur des soirées.
+- **Les joueurs se comparent sur les parties partagées.** Opposer le total de quelqu'un qui a
+  joué trente soirées à celui de quelqu'un qui en a joué cinq ne dit rien. Le duel remet les
+  deux sur le même terrain : mêmes parties, mêmes donnes, mêmes adversaires.
+
+### Les vachettes sortent du taux de prise
+
+Une vachette est une donne où *personne* n'a pris : elle ne mesure aucun appétit. Elle est
+comptée dans les donnes jouées, exclue de celles où prendre était une option.
+
+### Les analyses vivent dans `engine/`
+
+Même raison qu'ailleurs : c'est ce qui les rend testables. Une règle de conseil écrite dans
+un composant React ne se vérifie qu'à l'œil, sur des captures — or c'est précisément le genre
+de code qui a besoin d'être confronté à des cas limites, effectifs minces compris.
 
 ---
 

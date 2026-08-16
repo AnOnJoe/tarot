@@ -1,0 +1,57 @@
+/*
+ * Conseils et observations.
+ *
+ * Un conseil se lit comme une phrase, pas comme une alerte : pas de fond coloré, un simple
+ * liseré à gauche. Le ton se distingue à la teinte du liseré, mais la phrase reste entière
+ * quand la couleur ne passe pas — « tu tiens 2 prises sur 9 » se lit aussi bien en gris.
+ */
+
+.advices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.advice {
+  padding: 13px 15px 13px 14px;
+  border-radius: var(--r-card);
+  border-left: 3px solid var(--ink-faint);
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.advice[data-tone="force"] {
+  border-left-color: var(--pos);
+}
+
+.advice[data-tone="fragilite"] {
+  border-left-color: var(--neg);
+}
+
+/*
+ * Le constat garde le liseré neutre par défaut, et c'est délibéré : sur le thème clair,
+ * l'accent est un rouge sombre que rien ne distingue du rouge de fragilité. Trois états
+ * suffisent — vert pour un appui, rouge pour une faille, gris pour un fait qui n'est ni
+ * l'un ni l'autre. Colorer le neutre reviendrait à inquiéter pour rien.
+ */
+
+/* Une observation de table nomme des joueurs : leurs portraits valent mieux que leurs noms
+   répétés, et la phrase garde les noms de toute façon. */
+.advice--table {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.advice__faces {
+  display: flex;
+  flex: none;
+}
+
+/* Deux portraits se chevauchent légèrement : ils forment une paire, pas une liste. */
+.advice__faces .avatar + .avatar {
+  margin-left: -9px;
+  box-shadow: 0 0 0 2px var(--surface);
+}

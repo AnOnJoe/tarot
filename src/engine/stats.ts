@@ -1,4 +1,6 @@
-import type { Contract, Deal, PlayerId } from './types'
+import { DEFAULT_RULES } from './rules'
+import { contractBreakdown } from './score'
+import type { Contract, Deal, PlayerId, RuleSet } from './types'
 
 /** Ce qu'on sait d'un joueur une fois toutes les donnes dépouillées. */
 export interface PlayerStats {
@@ -8,6 +10,7 @@ export interface PlayerStats {
   dealsPlayed: number
   /** Donnes où ce joueur était preneur. */
   takes: number
+  /** Prises où le contrat a été réalisé, au sens du seuil — pas au sens du score. */
   takesWon: number
   /** Contrats choisis quand il a pris. */
   contracts: Record<Contract, number>
@@ -40,8 +43,19 @@ const EMPTY_CONTRACTS: Record<Contract, number> = {
  *
  * Une donne ne compte pour un joueur que s'il y figure : les parties d'une table à quatre
  * et celles d'une table à cinq se mélangent donc sans fausser les moyennes.
+ *
+ * **La réussite d'une prise se lit sur le contrat, jamais sur le score.** Une misère
+ * encaissée le même tour peut rendre positif le score d'un preneur qui a chuté ; le seuil,
+ * lui, ne ment pas. C'est aussi ce que lit `insights.ts` — les deux doivent s'accorder, sans
+ * quoi la même prise serait tenue ici et chutée là.
+ *
+ * Les barèmes n'entrent que pour ce seuil : `Deal.scores` reste figé à sa validation.
  */
-export function playerStats(deals: Deal[], playerIds: PlayerId[]): PlayerStats[] {
+export function playerStats(
+  deals: Deal[],
+  playerIds: PlayerId[],
+  rules: RuleSet = DEFAULT_RULES,
+): PlayerStats[] {
   return playerIds.map((playerId) => {
     const contracts = { ...EMPTY_CONTRACTS }
     let total = 0
@@ -68,7 +82,7 @@ export function playerStats(deals: Deal[], playerIds: PlayerId[]): PlayerStats[]
       if (isTaker) {
         takes++
         contracts[deal.input.contract]++
-        if (score > 0) takesWon++
+        if (contractBreakdown(deal.input, rules).success) takesWon++
       }
 
       if (isTaker || isPartner) {

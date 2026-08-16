@@ -1,41 +1,30 @@
-import { useEffect, useState } from 'react'
-import { achievements, type AchievementState } from '../engine/achievements'
-import { Avatar } from '../components/Avatar'
-import { EmptyState, Screen, TopAction } from '../components/ui'
-import { listAllDeals, listPlayers, loadRules, type Player } from '../store/db'
-import './achievements.css'
-
-interface AchievementsProps {
-  onClose: () => void
-}
+import type { AchievementState } from '../engine/achievements'
+import { Avatar } from './Avatar'
+import { EmptyState } from './ui'
+import type { Player } from '../store/db'
+import './feats.css'
 
 /**
- * Les hauts faits de la table, confrontés à tout l'historique.
+ * Les hauts faits de la table, décrochés et à décrocher.
  *
  * Rien n'est stocké : chaque exploit se recalcule à partir des donnes. Corriger une donne
  * saisie de travers retire donc le haut fait qu'elle avait fait décrocher, ce qui vaut
  * mieux qu'un tableau de chasse qui mentirait.
  */
-export function Achievements({ onClose }: AchievementsProps) {
-  const [states, setStates] = useState<AchievementState[]>([])
-  const [players, setPlayers] = useState<Player[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    Promise.all([listAllDeals(), listPlayers(), loadRules()]).then(
-      ([deals, loadedPlayers, rules]) => {
-        setStates(achievements(deals, rules))
-        setPlayers(loadedPlayers)
-        setLoading(false)
-      },
-    )
-  }, [])
-
-  const unlocked = states.filter((s) => s.total > 0)
-  const locked = states.filter((s) => s.total === 0)
+export function Feats({
+  states,
+  players,
+  loading,
+}: {
+  states: AchievementState[]
+  players: Player[]
+  loading?: boolean
+}) {
+  const unlocked = states.filter((state) => state.total > 0)
+  const locked = states.filter((state) => state.total === 0)
 
   return (
-    <Screen title="Hauts faits" left={<TopAction onClick={onClose}>Fermer</TopAction>}>
+    <>
       {!loading && unlocked.length === 0 && (
         <EmptyState title="Rien encore">
           <p>
@@ -71,7 +60,7 @@ export function Achievements({ onClose }: AchievementsProps) {
           </div>
         </>
       )}
-    </Screen>
+    </>
   )
 }
 
@@ -80,7 +69,7 @@ function Feat({ state, players }: { state: AchievementState; players: Player[] }
   const holders = Object.entries(state.byPlayer)
     .sort((a, b) => b[1] - a[1])
     .map(([id, count]) => ({ player: players.find((p) => p.id === id), count }))
-    .filter((entry) => entry.player)
+    .filter((entry): entry is { player: Player; count: number } => !!entry.player)
 
   return (
     <div className="feat" data-rare={state.def.rare || undefined}>
@@ -91,9 +80,9 @@ function Feat({ state, players }: { state: AchievementState; players: Player[] }
       <p className="feat__hint">{state.def.hint}</p>
       <div className="feat__holders">
         {holders.map(({ player, count }) => (
-          <span key={player!.id} className="feat__holder">
+          <span key={player.id} className="feat__holder">
             <Avatar player={player} size={26} />
-            {player!.name}
+            {player.name}
             {count > 1 && <strong className="num">×{count}</strong>}
           </span>
         ))}

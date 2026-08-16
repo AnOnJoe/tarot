@@ -52,15 +52,14 @@ recharge si une nouvelle version est en ligne.
 
 | Écran | À quoi il sert |
 |---|---|
-| **Accueil** | Reprendre la partie en cours, revoir les trois dernières parties — *Voir les N parties* déplie l'historique complet, *Paramètres* le reste |
+| **Accueil** | Reprendre la partie en cours, revoir les trois dernières parties, et la **carte de la table** — deux accroches sur ce que l'historique a de plus vivant à dire |
 | **Nouvelle partie** | Composer la table et désigner le premier donneur |
 | **Partie** | Le tableau des donnes, les cumuls, le rang de chacun |
 | **Saisie d'une donne** | Preneur, contrat, bouts, annonces, curseur de points, détail du calcul |
 | **Vachette** | Saisie du contrat maison : le **classement**, du moins de points au plus de points, ex æquo compris |
 | **Table** | Corriger l'ordre des joueurs en cours de partie et qui donne ensuite |
-| **Statistiques** | Courbes d'évolution, réussite des prises, bilan, attaque contre défense |
-| **Hauts faits** | Onze exploits propres au tarot, décrochés ou à décrocher |
-| **Carnet des joueurs** | Modifier un nom, une photo, un tag ; **le bilan de chacun** ; retirer quelqu'un |
+| **Statistiques** | Trois sections : *la table* (courbes, bilans, ce que l'historique dit de vous), *les joueurs* (la fiche d'analyse de chacun), *les hauts faits* |
+| **Carnet des joueurs** | Modifier un nom, une photo, un tag ; le bilan de chacun ; retirer quelqu'un |
 | **Règles maison** | Tous les barèmes, modifiables sans toucher au code |
 | **Sauvegarde** | Exporter, fusionner avec quelqu'un, ou restaurer — avec la date de la dernière sauvegarde |
 
@@ -114,6 +113,59 @@ Une **victoire** compte pour chacun des ex æquo : départager arbitrairement se
 d'admettre le partage. Une partie ouverte sans y jouer une seule donne ne compte pas.
 
 C'est une autre question que l'écran *Statistiques*, qui compare les joueurs entre eux.
+
+---
+
+## Ce que les statistiques savent dire
+
+L'écran *Statistiques* s'ouvre depuis la **carte de la table**, à l'accueil. Trois sections.
+
+### La table
+
+Les courbes d'évolution, la réussite des prises, le bilan de chacun, l'attaque contre la
+défense — et, sous *ce que dit l'historique*, les observations qui portent sur la table
+elle-même : les attelages à cinq qui gagnent ensemble, le joueur le plus régulier, le duel
+le plus fourni.
+
+### Les joueurs
+
+La fiche d'analyse de chacun. En tête, **ce que l'historique dit de lui** ; puis les chiffres
+qui le justifient.
+
+**Quand il prend**
+
+| | |
+|---|---|
+| Appétit | Ses prises rapportées à celles qu'un partage égal lui aurait données. `1×` est sa part exacte ; `2×` veut dire qu'il prend deux fois trop |
+| Réussite selon les bouts | Le seul paramètre qu'il connaît **avant** de s'engager, avec le seuil à atteindre |
+| Rendement par contrat | Ce que chaque contrat lui rapporte, en points par prise et non en total |
+| Marges | De combien il tient quand il tient, de combien il manque quand il chute |
+
+**Quand il ne prend pas** — ses points par donne défendue, les prises adverses tombées
+pendant qu'il défendait, son apport comme appelé à cinq, ce que la vachette lui coûte.
+
+**Sa trajectoire** — ses points par donne soirée après soirée, sa meilleure et sa pire, et
+son *battement* : bas, c'est une horloge ; haut, il alterne les soirées fastes et les
+naufrages. Ni une qualité ni un défaut, mais ce qui distingue deux joueurs de même moyenne.
+
+### Les hauts faits
+
+Onze exploits propres au tarot, décrochés ou à décrocher.
+
+### Les conseils se taisent plutôt que d'inventer
+
+Chaque analyse porte un effectif minimal, et **rien ne s'affiche en dessous** : un taux de
+réussite sur trois prises n'est pas une tendance, c'est du hasard mis en forme. Douze prises
+pour juger une façon de prendre, huit pour un contrat, trente donnes défendues pour comparer
+un défenseur à sa table. Les seuils exacts sont dans
+[`docs/DECISIONS.md`](docs/DECISIONS.md).
+
+Un conseil cite toujours son effectif — « tu tiens 2 prises sur 9 », jamais « 22 % » : le
+second cache ce sur quoi il repose. Sur une soirée seule, la fiche ne dit donc rien, et le
+dit.
+
+Une prise est **tenue au sens du contrat**, pas au sens du score : une misère encaissée le
+même tour peut rendre positif le score d'un preneur qui a chuté.
 
 ---
 
@@ -179,7 +231,7 @@ rendre sa taille à l'unité.
 ```sh
 npm install
 npm run dev      # serveur local
-npm test         # moteur de calcul et fusion — 110 tests
+npm test         # moteur de calcul, analyses et fusion — 154 tests
 npm run build    # production
 node scripts/make-icons.mjs   # régénère les icônes et le favicon
 ```
@@ -191,9 +243,9 @@ réellement qu'une fois déployé.**
 
 | | |
 |---|---|
-| `src/engine/` | Calcul des points, hauts faits, tags, tours de donne. TypeScript pur, sans React ni DOM |
+| `src/engine/` | Calcul des points, analyses, conseils, hauts faits, tags, tours de donne. TypeScript pur, sans React ni DOM |
 | `src/store/` | Persistance IndexedDB, sauvegarde, fusion de deux carnets |
-| `src/screens/` | Les onze écrans |
+| `src/screens/` | Les dix écrans |
 | `src/components/` | Portraits, tableau, curseur, graphiques SVG, logo |
 | `src/palette.ts` | Identité colorée des joueurs, validée pour le daltonisme |
 | `src/pwa.ts` | Enregistrement du service worker et recherche de mise à jour |

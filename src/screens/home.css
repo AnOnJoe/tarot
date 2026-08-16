@@ -63,6 +63,62 @@
   display: block;
 }
 
+/*
+ * Carte de la table.
+ *
+ * Surface pleine et non bordée, à la différence de la partie en cours : celle-ci appelle une
+ * action, celle-là raconte. Deux accroches au plus — une troisième transformerait la carte
+ * en tableau de bord, et on cesserait de la lire.
+ */
+.pulse {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 15px 16px 12px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pulse:active {
+  transform: scale(0.99);
+}
+
+.pulse__row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.pulse__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.pulse__headline {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+}
+
+.pulse__detail {
+  display: block;
+  margin-top: 1px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+.pulse__more {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--accent);
+}
+
 /* Rappel de sauvegarde. Il avertit sans alarmer : ce n'est pas une erreur, c'est une
    précaution — d'où la surface neutre plutôt que la teinte de danger. */
 .notice {

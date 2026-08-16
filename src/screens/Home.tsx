@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { tableHighlights, type Highlight } from '../engine/advice'
 import { formatPoints } from '../engine/rules'
 import { cumulative } from '../engine/score'
+import type { Deal, PlayerId, RuleSet } from '../engine/types'
 import { Avatar } from '../components/Avatar'
 import { Logo, TAGLINE } from '../components/Logo'
 import { SwipeToDelete } from '../components/SwipeToDelete'
@@ -25,6 +27,8 @@ interface GameSummary {
 }
 
 interface HomeProps {
+  /** Barèmes en vigueur : les accroches recalculent des écarts au seuil pour les établir. */
+  rules: RuleSet
   onResume: (game: Game) => void
   /** Consulter les statistiques d'une partie close, sans la rouvrir. */
   onOpenGameStats: (game: Game) => void
@@ -32,7 +36,6 @@ interface HomeProps {
   onReopen: (game: Game) => void
   onNewGame: () => void
   onOpenStats: () => void
-  onOpenAchievements: () => void
   onOpenRoster: () => void
   onOpenRules: () => void
   onOpenBackup: () => void
@@ -77,12 +80,12 @@ const RECENT = 3
 const BACKUP_NAG = 3
 
 export function Home({
+  rules,
   onResume,
   onOpenGameStats,
   onReopen,
   onNewGame,
   onOpenStats,
-  onOpenAchievements,
   onOpenRoster,
   onOpenRules,
   onOpenBackup,
@@ -96,6 +99,8 @@ export function Home({
   const [unsaved, setUnsaved] = useState(0)
   /** Partie dont le glissement est ouvert : une seule à la fois, comme dans iOS. */
   const [swiped, setSwiped] = useState<string | null>(null)
+  /** Toutes les donnes, réunies de partie en partie pour nourrir la carte de la table. */
+  const [allDeals, setAllDeals] = useState<Deal[]>([])
 
   const load = async () => {
     const [games, lastBackupAt] = await Promise.all([listGames(), getLastBackupAt()])
@@ -112,12 +117,16 @@ export function Home({
         return {
           game,
           players,
+          deals,
           totals: cumulative(deals, game.playerIds),
           dealCount: deals.length,
         }
       }),
     )
-    setSummaries(built)
+    // Les donnes sont déjà là, partie par partie : les recharger d'un bloc pour la carte
+    // serait un second parcours complet de la base à chaque retour à l'accueil.
+    setAllDeals(built.flatMap((summary) => summary.deals))
+    setSummaries(built.map(({ deals: _deals, ...summary }) => summary))
     setLoading(false)
   }
 
@@ -150,6 +159,24 @@ export function Home({
   // du point de vue de qui regarde l'écran, même si elle a sa propre carte.
   const shown = showAll ? past : past.slice(0, current ? RECENT - 1 : RECENT)
   const hidden = past.length - shown.length
+
+  /** Le carnet reconstitué depuis les parties : l'accueil n'a pas à le relire. */
+  const roster = useMemo(() => {
+    const byId = new Map<PlayerId, Player>()
+    for (const summary of summaries) {
+      for (const player of summary.players) byId.set(player.id, player)
+    }
+    return byId
+  }, [summaries])
+
+  const highlights = useMemo(() => {
+    const seen = new Set(allDeals.flatMap((deal) => Object.keys(deal.scores)))
+    return tableHighlights(
+      allDeals,
+      [...roster.keys()].filter((id) => seen.has(id)),
+      { rules, nameOf: (id) => roster.get(id)?.name ?? 'quelqu’un' },
+    )
+  }, [allDeals, roster, rules])
 
   return (
     <Screen
@@ -259,6 +286,36 @@ export function Home({
         </EmptyState>
       )}
 
+      {/* La carte de la table. Elle porte ce que l'historique a de plus vivant à dire au
+          moment où l'on ouvre l'application : c'est ce qui donne envie d'y entrer, là où une
+          entrée de menu intitulée « Statistiques » n'appelait personne. */}
+      {allDeals.length > 0 && (
+        <>
+          <p className="eyebrow">La table</p>
+          <button type="button" className="pulse" onClick={onOpenStats}>
+            {highlights.length > 0 ? (
+              highlights.map((highlight) => (
+                <PulseRow
+                  key={highlight.id}
+                  highlight={highlight}
+                  player={highlight.playerId ? roster.get(highlight.playerId) : undefined}
+                />
+              ))
+            ) : (
+              <span className="pulse__row">
+                <span className="pulse__text">
+                  <strong className="pulse__headline">Les statistiques</strong>
+                  <span className="pulse__detail">
+                    courbes, prises, bilans et hauts faits
+                  </span>
+                </span>
+              </span>
+            )}
+            <span className="pulse__more">Tout voir ›</span>
+          </button>
+        </>
+      )}
+
       {chosen && (
         <Sheet
           title={
@@ -322,17 +379,10 @@ export function Home({
         </div>
       )}
 
-      {/* Replié : on ouvre l'application pour jouer, pas pour régler quelque chose. */}
+      {/* Replié, et réduit à ce qui se règle vraiment : on ouvre l'application pour jouer,
+          et les statistiques ont désormais leur carte plus haut. */}
       <Collapsible title="Paramètres">
         <div className="list">
-          <button type="button" className="list__row" onClick={onOpenStats}>
-            <span className="list__grow">Statistiques</span>
-            <span className="list__meta">›</span>
-          </button>
-          <button type="button" className="list__row" onClick={onOpenAchievements}>
-            <span className="list__grow">Hauts faits</span>
-            <span className="list__meta">›</span>
-          </button>
           <button type="button" className="list__row" onClick={onOpenRoster}>
             <span className="list__grow">Carnet des joueurs</span>
             <span className="list__meta">›</span>
@@ -348,5 +398,23 @@ export function Home({
         </div>
       </Collapsible>
     </Screen>
+  )
+}
+
+/**
+ * Une accroche de la carte de la table.
+ *
+ * Le portrait vaut mieux qu'un puce : il rattache l'annonce à quelqu'un du premier coup
+ * d'œil, et c'est la même identité colorée que dans les courbes.
+ */
+function PulseRow({ highlight, player }: { highlight: Highlight; player?: Player }) {
+  return (
+    <span className="pulse__row">
+      {player && <Avatar player={player} size={34} />}
+      <span className="pulse__text">
+        <strong className="pulse__headline">{highlight.headline}</strong>
+        <span className="pulse__detail num">{highlight.detail}</span>
+      </span>
+    </span>
   )
 }

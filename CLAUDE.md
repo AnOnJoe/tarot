@@ -12,7 +12,7 @@ Lire [`README.md`](README.md) pour l'usage et les règles,
 ## Commandes
 
 ```sh
-npm test                      # 110 tests — moteur, hauts faits, tags, tours, bilans, fusion
+npm test                      # 154 tests — moteur, analyses, conseils, hauts faits, tags, tours, fusion
 npx tsc -b tsconfig.json --noEmit
 npm run build
 npm run dev
@@ -97,6 +97,13 @@ code relu**. Plusieurs bugs de cette base ont été trouvés ainsi, jamais par r
   ces noms pour une autre convention.
 - **Le nom de l'app est Vachette, l'URL reste `/tarot/`.** La renommer casserait les
   installations existantes.
+- **Une prise est tenue au sens du contrat, jamais au sens du score.** Une misère encaissée
+  le même tour rend positif le score d'un preneur qui a chuté. `stats.ts` et `insights.ts`
+  lisent tous deux `contractBreakdown` — les faire diverger affiche la même prise tenue dans
+  une liste et chutée dans la fiche d'à côté, sur le même écran. C'est arrivé.
+- **Sous l'effectif, `advice.ts` se tait.** Chaque règle porte un seuil exporté et testé.
+  Abaisser un seuil pour « remplir » un écran vide est la seule façon de rendre ces analyses
+  fausses.
 
 ---
 

@@ -1,0 +1,59 @@
+/* Fiche d'analyse d'un joueur. */
+
+.report__head {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.report__identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.report__name {
+  font-size: 18px;
+  font-weight: 680;
+  letter-spacing: -0.025em;
+}
+
+/*
+ * Trois fragments séparés par de l'espace, sans point médian : sur un iPhone étroit, la
+ * ligne passe à deux, et la ponctuation se retrouve alors orpheline d'un côté ou de l'autre.
+ * L'espace, lui, se replie sans laisser de trace.
+ */
+.report__meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 12px;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.report__total {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.report__quiet {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* Une rangée de compteurs posée seule dans sa carte : elle n'a rien à séparer d'au-dessus. */
+.tiles--flush {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}

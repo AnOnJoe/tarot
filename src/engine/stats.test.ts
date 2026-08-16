@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { playerRecord } from './stats'
+import { contractDeal } from './deals.fixture'
+import { playerRecord, playerStats } from './stats'
 import type { Deal } from './types'
 
 /** Une donne réduite à ce que le palmarès regarde : sa partie et ses scores. */
@@ -25,6 +26,23 @@ function deal(gameId: string, index: number, scores: Record<string, number>): De
     createdAt: index,
   }
 }
+
+describe('playerStats', () => {
+  it('lit la réussite d’une prise sur le contrat, jamais sur le score', () => {
+    // Le contrat chute — 40 points pour un seuil de 51 — mais le score du preneur est forgé
+    // positif, comme le ferait une misère encaissée le même tour. Compter une prise tenue
+    // ici ferait diverger cet écran de la fiche d'analyse, qui lit le seuil.
+    const deals = [
+      contractDeal({
+        taker: 'a',
+        oudlers: 1,
+        attackPoints: 40,
+        scores: { a: 12, b: -4, c: -4, d: -4 },
+      }),
+    ]
+    expect(playerStats(deals, ['a'])[0]).toMatchObject({ takes: 1, takesWon: 0 })
+  })
+})
 
 describe('playerRecord', () => {
   it('ne compte rien quand le joueur n’a jamais marqué', () => {

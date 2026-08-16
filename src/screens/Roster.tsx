@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { CONTRACT_LABELS, formatPoints, formatSigned } from '../engine/rules'
 import { playerRecord, playerStats } from '../engine/stats'
 import { TAG_HINT, isValidTag, normalizeTag } from '../engine/tag'
-import type { Contract, Deal } from '../engine/types'
+import type { Contract, Deal, RuleSet } from '../engine/types'
 import { Avatar } from '../components/Avatar'
 import { CumulativeChart } from '../components/charts/CumulativeChart'
 import { Button, Eyebrow, Screen, Sheet, TopAction } from '../components/ui'
@@ -20,6 +20,8 @@ import { preparePhoto } from '../store/photo'
 import './roster.css'
 
 interface RosterProps {
+  /** Barèmes en vigueur : le bilan lit le seuil du contrat pour compter les prises tenues. */
+  rules: RuleSet
   onClose: () => void
 }
 
@@ -30,7 +32,7 @@ interface RosterProps {
  * la même personne au moment de fusionner, il faut pouvoir recopier chez l'un le tag que
  * l'autre a tiré.
  */
-export function Roster({ onClose }: RosterProps) {
+export function Roster({ rules, onClose }: RosterProps) {
   const { players, refresh } = usePlayers()
   const [editing, setEditing] = useState<Player | null>(null)
   const [creating, setCreating] = useState(false)
@@ -84,6 +86,7 @@ export function Roster({ onClose }: RosterProps) {
           existing={players}
           deals={deals}
           games={games}
+          rules={rules}
           onDone={async () => {
             setEditing(null)
             setCreating(false)
@@ -105,6 +108,7 @@ function PlayerEditor({
   existing,
   deals,
   games,
+  rules,
   onDone,
   onCancel,
 }: {
@@ -112,6 +116,7 @@ function PlayerEditor({
   existing: Player[]
   deals: Deal[]
   games: Game[]
+  rules: RuleSet
   onDone: () => void
   onCancel: () => void
 }) {
@@ -221,7 +226,7 @@ function PlayerEditor({
 
       {error && <p className="editor__error">{error}</p>}
 
-      {player && <PlayerFigures player={player} deals={deals} games={games} />}
+      {player && <PlayerFigures player={player} deals={deals} games={games} rules={rules} />}
 
       <Button variant="primary" onClick={save} disabled={busy}>
         {player ? 'Enregistrer' : 'Ajouter'}
@@ -249,14 +254,16 @@ function PlayerFigures({
   player,
   deals,
   games,
+  rules,
 }: {
   player: Player
   deals: Deal[]
   games: Game[]
+  rules: RuleSet
 }) {
   const { stats, record, favourite, groups } = useMemo(() => {
     const mine = deals.filter((deal) => deal.scores[player.id] !== undefined)
-    const [stats] = playerStats(mine, [player.id])
+    const [stats] = playerStats(mine, [player.id], rules)
     const record = playerRecord(mine, player.id)
     const entries = Object.entries(stats.contracts) as [Contract, number][]
     const best = entries.reduce((a, b) => (b[1] > a[1] ? b : a), entries[0])
@@ -277,7 +284,7 @@ function PlayerFigures({
       .map((game, index) => ({ label: `partie ${index + 1}`, deals: byGame.get(game.id)! }))
 
     return { stats, record, favourite: best && best[1] > 0 ? best : null, groups }
-  }, [deals, games, player.id])
+  }, [deals, games, player.id, rules])
 
   if (stats.dealsPlayed === 0) {
     return (

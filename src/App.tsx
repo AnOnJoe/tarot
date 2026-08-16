@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { PlayerId } from './engine/types'
 import { Splash } from './components/Splash'
-import { Achievements } from './screens/Achievements'
 import { Backup } from './screens/Backup'
 import { Game } from './screens/Game'
 import { Home } from './screens/Home'
@@ -31,7 +30,6 @@ type View =
   /** `back` distingue le retour au tableau du retour à l'accueil après une partie close. */
   | { name: 'stats'; game?: GameRecord; back: 'accueil' | 'partie'; celebrate?: boolean }
   | { name: 'regles' }
-  | { name: 'hautsFaits' }
   | { name: 'carnet' }
   | { name: 'sauvegarde' }
 
@@ -123,11 +121,8 @@ export function App() {
       case 'regles':
         return <Rules rules={rules} onChange={setRules} onClose={() => setView({ name: 'accueil' })} />
 
-      case 'hautsFaits':
-        return <Achievements onClose={() => setView({ name: 'accueil' })} />
-
       case 'carnet':
-        return <Roster onClose={() => setView({ name: 'accueil' })} />
+        return <Roster rules={rules} onClose={() => setView({ name: 'accueil' })} />
 
       case 'sauvegarde':
         return (
@@ -145,6 +140,7 @@ export function App() {
       default:
         return (
           <Home
+            rules={rules}
             onResume={(game) => setView({ name: 'partie', game })}
             onOpenGameStats={(game) => setView({ name: 'stats', game, back: 'accueil' })}
             onReopen={async (game) => {
@@ -153,7 +149,6 @@ export function App() {
             }}
             onNewGame={() => setView({ name: 'nouvelle' })}
             onOpenStats={() => setView({ name: 'stats', back: 'accueil' })}
-            onOpenAchievements={() => setView({ name: 'hautsFaits' })}
             onOpenRoster={() => setView({ name: 'carnet' })}
             onOpenRules={() => setView({ name: 'regles' })}
             onOpenBackup={() => setView({ name: 'sauvegarde' })}
